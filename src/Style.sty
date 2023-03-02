@@ -18,32 +18,81 @@
 
 % for graphics
 \usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{pdfpages}
+
+\usepackage{hyperref}
+
+\usepackage{enumitem}
+\setlist{nosep}
+\setlist[enumerate]{label*=\arabic*.}
+
+
 
 \renewcommand{\figurename}{Рисунок}
 
-% redefinition of the list enumerate environment
+\newcommand{\img}[2] {
+	\begin{figure}[h!tp]
+		\center{\includegraphics[width=0.9\textwidth]{#1}}
+		\caption{#2}
+		\label{img:#1}
+	\end{figure}
+}
+
 \renewenvironment{enumerate}{
 	\begin{list}{\labelenumi}
-	  {\usecounter{enumi} \def\makelabel##1{\hss ##1}
-	\setlength{\itemsep}{0pt}
-	\setlength{\parskip}{0pt}
-	\setlength{\parsep}{0pt}
-	\setlength{\topsep}{0pt}
-	\setlength{\partopsep}{0pt}
-}}{\end{list}}
+	{\usecounter{enumi} \def\makelabel##1{\hss ##1}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\setlength{\parsep}{0pt}
+		\setlength{\topsep}{0pt}
+		\setlength{\partopsep}{0pt}
+	}}{\end{list}}
 
-% redefinition of the list enumeration style
-%\renewcommand{\labelitemi}{$\bullet$}
-%\renewcommand{\labelitemii}{$\bullet$}
-%\renewcommand{\labelitemiii}{$\bullet$}
-%\renewcommand{\labelitemiv}{$\bullet$}
-% redefinition of the list itemize environment
 \renewenvironment{itemize}{
 	\begin{list}{\labelitemi}
-	  {\def\makelabel##1{\hss ##1}
-	\setlength{\itemsep}{0pt}
-	\setlength{\parskip}{0pt}
-	\setlength{\parsep}{0pt}
-	\setlength{\topsep}{0pt}
-	\setlength{\partopsep}{0pt}
-}}{\end{list}}
+	{\def\makelabel##1{\hss ##1}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\setlength{\parsep}{0pt}
+		\setlength{\topsep}{0pt}
+		\setlength{\partopsep}{0pt}
+	}}{\end{list}}
+
+% self title function
+\newcommand{\mytitle}[1]{
+	\begin{center}
+		\includegraphics[scale=0.5]{../logo.png} \break % вставка логотипа
+		\normalsize{МИНОБРНАУКИ РОССИИ}\\
+		\normalsize{Федеральное государственное бюджетное образовательное учреждение высшего образования}\\
+		\normalsize{\textbf{«МИРЭА --- Российский технологический университет»}}\\
+		\large{\textbf{РТУ МИРЭА}}\\
+		\bigskip \hrule \smallskip
+		\normalsize{Институт Информационных технологий}\\
+		\vfill
+		\normalsize{Кафедра Математического обеспечения и стандартизации информационных технологий}\\
+		\vfill
+		\large{\textbf{Отчет по практической работе № #1}}\\
+		\normalsize{по дисциплине «Разработка мобильных приложений»}\\
+		\vfill
+		\vfill
+		\normalsize{
+			\begin{tabular}{lrr}
+				\textbf{Выполнил:} & &\\
+				Студент группы ИКБО-06-21 & & Шестаков Я.Е. \\\\
+				\textbf{Проверил:} &  доцент & Синицын И.В. \\\\
+			\end{tabular}
+		}\\
+		\vfill
+	\end{center}
+
+	\begin{center} Москва 2023 \end{center}
+
+	\thispagestyle{empty}
+
+
+
+	\thispagestyle{empty}
+	\newpage
+}
+
