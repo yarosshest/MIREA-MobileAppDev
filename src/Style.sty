@@ -5,7 +5,7 @@
 \usepackage[utf8]{inputenc} % correct encoding source file
 \usepackage[english,russian]{babel} % correct language
 \usepackage[labelsep=period]{caption}
-
+\usepackage{color}
 
 \frenchspacing
 \pagestyle{plain}
@@ -20,7 +20,7 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{pdfpages}
-
+\usepackage{listings}
 \usepackage{hyperref}
 
 \usepackage{enumitem}
@@ -28,6 +28,10 @@
 \setlist[enumerate]{label*=\arabic*.}
 
 
+\clubpenalty=9999
+\widowpenalty=9999
+
+\providecommand{\No}{\textnumero}
 
 \renewcommand{\figurename}{Рисунок}
 
@@ -35,7 +39,7 @@
 	\begin{figure}[h!tp]
 		\center{\includegraphics[width=0.9\textwidth]{#1}}
 		\caption{#2}
-		\label{img:#1}
+		\label{fig:#1}
 	\end{figure}
 }
 
@@ -94,5 +98,15 @@
 
 	\thispagestyle{empty}
 	\newpage
+}
+\lstdefinelanguage{XML}{
+	commentstyle=\color{gray},
+	breaklines=true,
+	morestring=[b]",
+	morestring=[s]{>}{<},
+	morecomment=[s]{<!--}{-->},
+	stringstyle=\color{black},
+	identifierstyle=\color{red},
+	keywordstyle=\color{cyan},
 }
 

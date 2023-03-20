@@ -1,0 +1,63 @@
+\graphicspath{{./png}}
+\section*{\LARGE{Цель практической работы}}
+\addcontentsline{toc}{section}{Цель практической работы}
+В практической работе было рассмотренно как использовать базовые возможности
+платформы для различных способов разметки экрана.
+
+\newpage
+
+\section*{\LARGE{Выполнение практической работы}}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{LinearLayout}
+Контейнер \texttt{LinearLayout} представляет простейший контейнер - объект
+\texttt{ViewGroup}, который упорядочивает все дочерние элементы в одном
+направлении: по горизонтали или по вертикали.
+Все элементы расположены один за другим.
+Направление разметки указывается с помощью атрибута
+\texttt{android:orientation}.
+Если, например, ориентация разметки вертикальная
+\texttt{(android:orientation="vertical")}, то все элементы располагаются в столбик - по
+одному элементу на каждой строке.
+Если ориентация горизонтальная
+\texttt{(android:orientation="horizontal")}, то элементы располагаются в одну строку.
+Например, расположим элементы в горизонтальный ряд:
+
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:LinearLayout]
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="horizontal" >
+<TextView
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_margin="5dp"
+android:text="Hello"
+android:textSize="26sp" />
+<TextView
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_margin="5dp"
+android:text="Android"
+android:textSize="26sp" />
+<TextView
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_margin="5dp"
+android:text="World"
+android:textSize="26sp" />
+</LinearLayout>
+\end{lstlisting}
+\subsection{Вес элемента}
+\texttt{LinearLayout} поддерживает такое свойство, как вес элемента, которое
+передается атрибутом \texttt{android:layout\_weight}.
+Это свойство принимает
+значение, указывающее, какую часть оставшегося свободного места
+контейнера по отношению к другим объектам займет данный элемент.
+Например, если один элемент у нас будет иметь для свойства
+\texttt{android:layout\_weight} значение 2, а другой - значение 1, то в сумме они дадут
+3, поэтому первый элемент будет занимать 2/3 оставшегося пространства, а
+второй - 1/3.
+Если все элементы имеют значение \texttt{android:layout\_weight="1"}, то все эти
+элементы будут равномерно распределены по всей площади контейнера:
