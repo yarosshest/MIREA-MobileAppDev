@@ -49,6 +49,9 @@ android:text="World"
 android:textSize="26sp" />
 </LinearLayout>
 \end{lstlisting}
+
+\img{png_1.png}{LinearLayout}
+
 \subsection{Вес элемента}
 \texttt{LinearLayout} поддерживает такое свойство, как вес элемента, которое
 передается атрибутом \texttt{android:layout\_weight}.
@@ -61,3 +64,386 @@ android:textSize="26sp" />
 второй - 1/3.
 Если все элементы имеют значение \texttt{android:layout\_weight="1"}, то все эти
 элементы будут равномерно распределены по всей площади контейнера:
+
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:Вес элемента]
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent"
+ android:orientation="vertical" >
+ <TextView
+ android:layout_width="match_parent"
+ android:layout_height="0dp"
+ android:text="Hello"
+ android:background="#e0e0e0"
+ android:layout_weight="1"
+ android:textSize="26sp" />
+ <TextView
+ android:layout_width="match_parent"
+ android:layout_height="0dp"
+ android:background="#eeeeee"
+ android:text="Android"
+ android:layout_weight="1"
+ android:textSize="26sp" />
+ <TextView
+ android:layout_width="match_parent"
+ android:layout_height="0dp"
+ android:text="World"
+ android:background="#bdbdbd"
+ android:layout_weight="1"
+ android:textSize="26sp" />
+</LinearLayout>
+\end{lstlisting}
+
+\img{png_2.png}{Вес элемента}
+
+При этом так как у нас вертикальный стек, то нам надо также установить для
+свойства layout\_height значение 0dp.
+Если бы LinearLayout имел
+горизонтальную ориентацию, то для свойства layout\_width надо было бы
+установить значение 0dp.
+Еще один атрибут android:weightSum позволяет указать сумму весов всех
+элементов.
+Например:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:android:weightSum]
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent"
+ android:orientation="vertical"
+ android:weightSum="7">
+ <TextView
+ android:layout_width="match_parent"
+ android:layout_height="0dp"
+ android:text="Hello"
+ android:background="#e0e0e0"
+ android:layout_weight="1"
+ android:textSize="26sp" />
+ <TextView
+ android:layout_width="match_parent"
+ android:layout_height="0dp"
+ android:background="#eeeeee"
+ android:text="Android"
+ android:layout_weight="3"
+ android:textSize="26sp" />
+ <TextView
+ android:layout_width="match_parent"
+ android:layout_height="0dp"
+ android:text="World"
+ android:background="#bdbdbd"
+ android:layout_weight="2"
+ android:textSize="26sp" />
+</LinearLayout>
+\end{lstlisting}
+\img{png_3.png}{weightSum}
+
+\subsection{Программное создание LinearLayout}
+Создание LinearLayout в коде:
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Kotlin}, label=lst:Программное создание LinearLayout]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        var linearLayout = LinearLayout(this);
+        linearLayout.orientation = LinearLayout.VERTICAL
+        val textView1 = TextView(this)
+        textView1.text = "Hello"
+        textView1.textSize = 30f
+        linearLayout.addView(
+            textView1,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 3f)
+        )
+        val textView2 = TextView(this)
+        textView2.text = "Android"
+        textView2.setBackgroundColor(0xFFBDBDBD.toInt())
+        textView2.textSize = 30f
+        linearLayout.addView(
+            textView2,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 2f)
+        )
+        setContentView(linearLayout)
+    }
+\end{lstlisting}
+\img{png_4}{Программное создание LinearLayout}
+
+\section{Layout\_gravity}
+Атрибут layout\_gravity позволяет устанавливать позиционирование
+относительно LinearLayout.
+Он принимает следуюшие значения:
+\begin{itemize}
+    \item top: выравнивает элемент по верхней границе контейнера;
+    \item bottom: выравнивает элемент по нижней границе контейнера;
+    \item left: выравнивает элемент по левой границе контейнера;
+    \item right: выравнивает элемент по правой границе контейнера;
+    \item center\_vertical: выравнивает элемент по центру по вертикали;
+    \item center\_horizontal: выравнивает элемент по центру по горизонтали;
+    \item center: элемент позиционируется в центре;
+    \item fill\_vertical: элемент растягивается по вертикали;
+    \item fill\_horizontal: элемент растягивается по горизонтали;
+    \item fill: элемент заполняет все пространство контейнера;
+    \item clip\_vertical: обрезает верхнюю и нижнюю границу элемента;
+    \item clip\_horizontal: обрезает правую и левую границу элемента;
+    \item start: элемент позиционируется в начале (в верхнем левом углу) контейнера;
+    \item end: элемент позиционируется в конце контейнера (в верхнем правом
+    углу).
+\end{itemize}
+Например:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:Layoutgravity2]
+<LinearLayout
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent"
+ android:orientation="vertical">
+ <TextView
+ android:layout_gravity="left"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:textSize="30sp"
+ android:text="Hello Java!"
+ android:background="#e8eaf6"/>
+ <TextView
+ android:layout_gravity="center"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:textSize="30sp"
+ android:text="Hello World!"
+ android:background="#e8eaf6"/>
+ <TextView
+ android:layout_gravity="right"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:textSize="30sp"
+ android:text="Hello Android!"
+ android:background="#e8eaf6"/>
+ <TextView
+ android:layout_gravity="center"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:textSize="30sp"
+ android:text="Hello Kotlin!"
+ android:background="#e8eaf6"/>
+</LinearLayout>
+\end{lstlisting}
+
+В данном случае первый элемент TextView будет позиционироваться по
+левой стороне контейнера (android:layout\_gravity=\("\)left\("\)), второй TextView по
+центру (android:layout\_gravity=\("\)center\("\)), третий - по правой стороне
+(android:layout\_gravity=\("\)right\("\)) и четвертый - по центру
+(android:layout\_gravity=\("\)center\("\))
+
+\img{png_5}{Layout\_gravity}
+Стоит учитывать ориентацию контейнера.
+Например, при вертикальной
+ориентации все элементы будут представлять вертикальный стек, идущий
+сверху вниз.
+Поэтому значения, которые относятся к позиционированию
+элемента по вертикали (например, top или bottom) никак не будут влиять на
+элемент.
+Также при горизонтальной ориентации LinearLayout не окажут
+никакого влияния значения, которые позиционируют элемент по
+горизонтали, например, left и right.
+Для установки программно параметра layout\_gravity надо задать поле
+gravity у объекта LinearLayout.LayoutParams:
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Kotlin}, label=lst:Layoutgravity1]
+package com.example.mirea_mob_4sem
+
+import android.os.Bundle
+import android.view.Gravity
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+
+
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val linearLayout = LinearLayout(this)
+        linearLayout.orientation = LinearLayout.VERTICAL
+        val layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        layoutParams.gravity = Gravity.CENTER
+        val textView1 = TextView(this)
+        textView1.text = "Hello"
+        textView1.textSize = 30f
+        linearLayout.addView(textView1, layoutParams)
+        setContentView(linearLayout)
+    }
+}
+\end{lstlisting}
+В качестве значения передается одна из констант класса Gravity, которые
+аналогичны значениям атрибута.
+
+\section{RelativeLayout}
+RelativeLayout представляет объект ViewGroup, который располагает
+дочерние элементы относительно позиции других дочерних элементов
+разметки или относительно области самой разметки RelativeLayout.
+Используя относительное позиционирование, мы можем установить элемент
+по правому краю или в центре или иным способом, который предоставляет
+данный контейнер.
+Для установки элемента в файле xml предоставляет
+данный контейнер.
+Для установки элемента в файле xml мы можем
+применять следующие атрибуты:
+\begin{itemize}
+    \item android:layout\_above: располагает элемент над элементом с
+    указанным Id;
+    \item android:layout\_below: располагает элемент под элементом с
+    указанным Id;
+    \item android:layout\_toLeftOf: располагается слева от элемента с
+    указанным Id;
+    \item android:layout\_toRightOf: располагается справа от элемента с
+    указанным Id;
+    \item android:layout\_toStartOf: располагает начало текущего элемента, где
+    начинается элемент с указанным Id;
+    \item android:layout\_toEndOf: располагает начало текущего элемента, где
+    завершается элемент с указанным Id;
+    \item android:layout\_alignBottom: выравнивает элемент по нижней
+    границе другого элемента с указанным Id;
+    \item android:layout\_alignLeft: выравнивает элемент по левой границе
+    другого элемента с указанным Id;
+    \item android:layout\_alignRight: выравнивает элемент по правой границе
+    другого элемента с указанным Id'
+    \item android:layout\_alignStart: выравнивает элемент по линии, у которой
+    начинается другой элемент с указанным Id;
+    \item android:layout\_alignEnd: выравнивает элемент по линии, у которой
+    завершается другой элемент с указанным Id;
+    \item android:layout\_alignTop: выравнивает элемент по верхней границе
+    другого элемента с указанным Id;
+    \item android:layout\_alignBaseline: выравнивает базовую линию элемента
+    по базовой линии другого элемента с указанным Id;
+    \item android:layout\_alignParentBottom: если атрибут имеет значение
+    true, то элемент прижимается к нижней границе контейнера;
+    \item android:layout\_alignParentRight: если атрибут имеет значение true,
+    то элемент прижимается к правому краю контейнера;
+    \item android:layout\_alignParentLeft: если атрибут имеет значение true, то
+    элемент прижимается к левому краю контейнера;
+    \item android:layout\_alignParentStart: если атрибут имеет значение true,
+    то элемент прижимается к начальному краю контейнера (при
+    левосторонней ориентации текста - левый край);
+    \item android:layout\_alignParentEnd: если атрибут имеет значение true, то
+    элемент прижимается к конечному краю контейнера (при
+    левосторонней ориентации текста - правый край);
+    \item android:layout\_alignParentTop: если атрибут имеет значение true, то
+    элемент прижимается к верхней границе контейнера;
+    \item android:layout\_centerInParent: если атрибут имеет значение true, то
+    элемент располагается по центру родительского контейнера;
+    \item android:layout\_centerHorizontal: при значении true выравнивает
+    элемент по центру по горизонтали;
+    \item android:layout\_centerVertical: при значении true выравнивает
+    элемент по центру по вертикали;
+\end{itemize}
+Например, позиционирование относительно контейнера RelativeLayout:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:RelativeLayout]
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent">
+ <TextView android:text="Left Top"
+ android:layout_height="wrap_content"
+ android:layout_width="wrap_content"
+ android:textSize="26sp"
+ android:layout_alignParentLeft="true"
+ android:layout_alignParentTop="true" />
+ <TextView android:text="Right Top"
+ android:layout_height="wrap_content"
+ android:layout_width="wrap_content"
+ android:textSize="26sp"
+ android:layout_alignParentRight="true"
+ android:layout_alignParentTop="true" />
+ <TextView android:text="Left Bottom"
+ android:layout_height="wrap_content"
+ android:layout_width="wrap_content"
+ android:textSize="26sp"
+ android:layout_alignParentLeft="true"
+ android:layout_alignParentBottom="true" />
+ <TextView android:text="Right Bottom"
+ android:layout_height="wrap_content"
+ android:layout_width="wrap_content"
+ android:textSize="26sp"
+ android:layout_alignParentRight="true"
+ android:layout_alignParentBottom="true" />
+</RelativeLayout>
+\end{lstlisting}
+
+\img{png_6}{RelativeLayout}
+Для позиционирования относительно другого элемента, нам надо указать id
+этого элемента.
+Так, поместим на RelativeLayout текстовое поле и кнопку:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:RelativeLayout1]
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent">
+ <EditText
+ android:id="@+id/edit_message"
+ android:layout_width="match_parent"
+ android:layout_height="wrap_content"
+ android:layout_centerInParent="true"/>
+ <Button
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="Отправить"
+ android:layout_alignRight="@id/edit_message"
+ android:layout_below="@id/edit_message"
+ />
+</RelativeLayout>
+\end{lstlisting}
+В данном случае поле EditText располагается по центру в RelativeLayout, а
+кнопка помещается под EditText и выравнивается по его правой границе:
+\img{png_7}{Позиционирование RelativeLayout в Android}
+\subsection{Программное создание RelativeLayout}
+Создадим элемент RelativeLayout программно в коде:
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Kotlin}, label=lst:RelativeLayout2]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val relativeLayout = RelativeLayout(this)
+        val editText = EditText(this)
+        editText.id = EditText.generateViewId()
+        val button = Button(this)
+        button.setText("Отправить")
+        val editTextParams = RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.MATCH_PARENT,
+            RelativeLayout.LayoutParams.WRAP_CONTENT
+        )
+        editTextParams.addRule(RelativeLayout.CENTER_IN_PARENT)
+        relativeLayout.addView(editText, editTextParams)
+        val buttonParams = RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.WRAP_CONTENT,
+            RelativeLayout.LayoutParams.WRAP_CONTENT
+        )
+        buttonParams.addRule(RelativeLayout.BELOW, editText.id)
+        buttonParams.addRule(RelativeLayout.ALIGN_RIGHT, editText.id)
+        relativeLayout.addView(button, buttonParams)
+        setContentView(relativeLayout)
+    }
+\end{lstlisting}
+\img{png_8}{Позиционирование RelativeLayout в Android}
+Чтобы задать положение элемента в контейнере, применяется класс
+RelativeLayout.LayoutParams.
+Через конструктор устанавливаются значения
+для для ширины и высоты.
+Например, у элемента EditText для ширины
+устанавливается значение MATCH\_PARENT, а для высоты -
+WRAP\_CONTENT.
+С помощью метода addRule() мы можем добавлять дополнительные правила
+для позиционирования элемента.
+Этот метод в качестве параметра принимает
+числовую константу, которая представляет параметр позиционирования и
+которая аналогична атрибуту.
+Например, атрибуту
+android:layout\_centerInParent будет соответствовать константа
+CENTER\_IN\_PARENT, а атрибуту android:layout\_alignRight константа
+ALIGN\_RIGHT.
+Стоит отметить, что в целях упрощения кода для установки id у EditText
+вызывается метод generateViewId();, который позволяет программно
+сгенерировать id для элемента управления.
+Затем установленный id передается в качестве второго параметра в метод
+addRule при установке правил для кнопки:
+buttonParams.addRule(RelativeLayout.BELOW, editText.getId());
+Тем самым мы указываем относительно какого элемента надо задать
+расположение.
+\section{TableLayout}
