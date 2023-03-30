@@ -447,3 +447,788 @@ buttonParams.addRule(RelativeLayout.BELOW, editText.getId());
 Тем самым мы указываем относительно какого элемента надо задать
 расположение.
 \section{TableLayout}
+Контейнер TableLayout структурирует элементы управления в виде таблицы
+по столбцам и строкам.
+Определим в файле activity\_main.xml элемент
+TableLayout, который будет включать две строки и два столбца:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:TableLayout]
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TableRow>
+        <TextView
+            android:layout_weight="0.5"
+            android:text="Логин"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <EditText
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </TableRow>
+    <TableRow>
+        <TextView
+            android:layout_weight="0.5"
+            android:text="Email"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <EditText
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </TableRow>
+</TableLayout>
+\end{lstlisting}
+\img{png_9}{Разметка TableLayout в Android}
+Используя элемент TableRow, мы создаем отдельную строку. Как разметка
+узнает сколько столбцов надо создать? Android находит строку с
+максимальным количеством виджетов одного уровня, и это количество будет
+означать количество столбцов. Например, в данном случае у нас определены
+две строки и в каждой по два элемента. Если бы в какой-нибудь из них было
+бы три виджета, то соответственно столбцов было бы также три, даже если в
+другой строке осталось бы два виджета.
+Причем элемент TableRow наследуется от класса LinearLayout, поэтому мы
+можем к нему применять тот же функционал, что и к LinearLayout. В
+частности, для определения пространства для элементов в строке
+используется атрибут android:layout\_weight.
+Если какой-то элемент должен быть растянут на ряд столбцов, то мы можем
+растянуть его с помощью атрибута layout\_span, который указывает на какое
+количество столбцов надо растянуть элемент:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:TableRow]
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent">
+<TableRow>
+<TextView
+android:layout_weight="0.5"
+android:text="Логин"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content" />
+<EditText
+android:layout_weight="1"
+android:layout_width="match_parent"
+android:layout_height="wrap_content" />
+</TableRow>
+<TableRow>
+<TextView
+android:layout_weight="0.5"
+android:text="Email"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content" />
+<EditText
+android:layout_weight="1"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content" />
+</TableRow>
+</TableLayout>
+\end{lstlisting}
+\img{png10]}{Растягиваем элемент на несколько столбцов в TableLayout в Android}
+Также можно растянуть элемент на всю строку, установив у него атрибут
+android:layout\_weight=\("1"\):
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:layout_weight]
+<TableRow>
+<Button
+    android:text="Отправить"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_weight="1" />
+</TableRow>
+\end{lstlisting}
+\subsection{Программное создание TableLayout}
+Создадим TableLayout программным образом, переложив на код java самый
+первый пример из данного материала:
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Kotlin}, label=lst:Программное создание TableLayout]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val tableLayout = TableLayout(this)
+
+        val tableRow1 = TableRow(this)
+        val textView1 = TextView(this)
+        textView1.text = "Логин"
+        tableRow1.addView(
+            textView1, TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,
+                TableRow.LayoutParams.WRAP_CONTENT, 0.5f
+            )
+        )
+        val editText1 = EditText(this)
+        tableRow1.addView(
+            editText1, TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,
+                TableRow.LayoutParams.WRAP_CONTENT, 1.0f
+            )
+        )
+
+        val tableRow2 = TableRow(this)
+        val textView2 = TextView(this)
+        textView2.text = "Email"
+        tableRow2.addView(
+            textView2, TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,
+                TableRow.LayoutParams.WRAP_CONTENT, 0.5f
+            )
+        )
+        val editText2 = EditText(this)
+        tableRow2.addView(
+            editText2, TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,
+                TableRow.LayoutParams.WRAP_CONTENT, 1f
+            )
+        )
+        tableLayout.addView(tableRow1)
+        tableLayout.addView(tableRow2)
+        setContentView(tableLayout)
+    }
+\end{lstlisting}
+\img{png_11}{Программное создание TableLayout}
+
+\section{FrameLayout}
+Контейнер FrameLayout предназначен для вывода на экран одного
+помещенного в него визуального элемента. Если же мы поместим несколько
+элементов, то они будут накладываться друг на друга. Тем не менее также
+можно располагать в FrameLayout несколько элементов.
+Допустим, вложим в FrameLayout два элемента TextView:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:FrameLayout]
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent">
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="Hello World!"
+ android:textSize="26sp"/>
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="Hello Android!"
+ android:textSize="26sp"
+ android:layout_marginTop="50dp"/>
+</FrameLayout>
+\end{lstlisting}
+Здесь оба элемента позиционируются в одно и то же место - в левый верхний
+угол контейнера FrameLayout, и чтобы избежать наложения, в данном случае
+у второго TextView устанавливается отступ сверху в 50 единиц.
+\img{png_12}{FrameLayout в Android}
+Нередко FrameLayout применяется для создания производных контейнеров,
+например, ScrollView, который обеспечивает прокрутку.
+Элементы управления, которые помещаются в FrameLayout, могут
+установить свое позиционирование с помощью атрибута
+android:layout\_gravity:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:layoutgravity]
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent">
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="Hello World!"
+ android:textSize="26sp"
+ android:layout_gravity="center_horizontal" />
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="Welcome to Java World"
+ android:textSize="26sp"
+ android:layout_gravity="center"/>
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="Hello Android!"
+ android:textSize="26sp"
+ android:layout_gravity="bottom|center_horizontal"/>
+</FrameLayout>
+\end{lstlisting}
+При указании значения мы можем комбинировать ряд значений, разделяя их
+вертикальной чертой: bottom | center\_horizontal
+\img{png_13}{Gravity в FrameLayout в Android}
+Программное создание FrameLayout в коде MainActivity:
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Kotlin}, label=lst:Программное создание FrameLayout]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val frameLayout = FrameLayout(this)
+        val textView = TextView(this)
+        textView.text = "Hello World!"
+        val layoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
+        )
+        layoutParams.gravity = Gravity.CENTER_HORIZONTAL or Gravity.TOP
+        textView.layoutParams = layoutParams
+        textView.textSize = 26f
+        frameLayout.addView(textView)
+        setContentView(frameLayout)
+    }
+\end{lstlisting}
+
+\section{GridLayout}
+GridLayout представляет еще один контейнер, который позволяет создавать
+табличные представления. GridLayout состоит из коллекции строк, каждая из
+которых состоит из отдельных ячеек:
+
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:GridLayout]
+<?xml version="1.0" encoding="utf-8"?>
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent"
+ android:rowCount="3"
+ android:columnCount="3">
+ <Button android:text="1" />
+ <Button android:text="2" />
+ <Button android:text="3" />
+ <Button android:text="4" />
+ <Button android:text="5" />
+ <Button android:text="6" />
+ <Button android:text="7" />
+ <Button android:text="8" />
+ <Button android:text="9" />
+</GridLayout>
+\end{lstlisting}
+С помощью атрибутов android:rowCount и android:columnCount
+устанавливается число строк и столбцов соответственно. Так, в данном
+случае устанавливаем 3 строки и 3 столбца. GridLayout автоматически может
+позиционировать вложенные элементы управления по строкам. Так, в нашем
+случае первая кнопка попадает в первую ячейку (первая строка первый
+столбец), вторая кнопка - во вторую ячейку и так далее.
+При этом ширина столбцов устанавливается автоматически по ширине
+самого широкого элемента.
+\img{png_14}{GridLayout в Android}
+Однако мы можем явно задать номер столбца и строки для определенного
+элемента, а при необходимости растянуть на несколько столбцов или строк.
+Для этого мы можем применять следующие атрибуты:
+\begin{itemize}
+    \item android:layout\_column: номер столбца (отсчет идет от нуля);
+    \item android:layout\_row: номер строки;
+    \item android:layout\_columnSpan: количество столбцов, на которые
+    растягивается элемент;
+    \item android:layout_rowSpan: количество строк, на которые растягивается
+    элемент.
+\end{itemize}
+Например:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:GridLayoutAtr]
+    <GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent"
+ android:rowCount="3"
+ android:columnCount="3">
+ <Button
+ android:text="1"
+ android:layout_column="0"
+ android:layout_row="0" />
+ <Button android:text="2"
+ android:layout_column="1"
+ android:layout_row="0"/>
+ <Button android:text="3"
+ android:layout_column="2"
+ android:layout_row="0" />
+ <Button android:text="4"
+ android:layout_width="180dp"
+ android:layout_columnSpan="2"/>
+ <Button android:text="5"
+ android:layout_height="100dp"
+ android:layout_rowSpan="2"/>
+ <Button android:text="6" />
+ <Button android:text="7"/>
+</GridLayout>
+\end{lstlisting}
+\img{png_15}{Растяжение строк и столбцов в GridLayout в Android}
+\subsection{Программное создание GridLayout}
+Среди методов GridLayout следует отметить методы setRowCount() и
+setColumnCount(), которые позволяют задать соответственно количество
+строк и столбцов. Например, определим в коде GridLayout, аналогичнй
+первому примеру в данном материале:
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Kotlin}, label=lst:Программное создание GridLayout]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val gridLayout = GridLayout(this)
+
+        gridLayout.setRowCount(3)
+
+        gridLayout.setColumnCount(3)
+        for (i in 1..9) {
+            val btn = Button(this)
+            btn.setText(i.toString())
+            gridLayout.addView(btn)
+        }
+        setContentView(gridLayout)
+    }
+\end{lstlisting}
+В данном случае GridLayout имеет три строки и три столбца. При добавлении
+виджетов (в данном случае кнопок) они последовательно помещаются в
+ячейки грида по одному виджету в ячейке.
+Для более детальной настройки расположения виджета в гриде можно
+использовать класс GridLayout.LayoutParams. Этот класс имеет ряд
+свойств, которые позволяют настроить расположение:
+\begin{itemize}
+    \item columnSpec: задает столбец для расположения в виде объекта
+    GridLayout.Spec;
+    \item rowSpec: задает строку для расположения в виде объекта
+    GridLayout.Spec;
+    \item leftMargin: задает отступ слева;
+    \item rightMargin: задает отступ справа;
+    \item topMargin: задает отступ сверху;
+    \item bottomMargin: задает отступ снизу;
+    \item width: задает ширину виджета;
+    \item height: задает высоту виджета.
+\end{itemize}
+Объект GridLayout.Spec позволяет задать размещение в ячейках столбца или
+строки. Для создание этого объекта применяется статический метод
+GridLayout.spec(), который имеет ряд версий. Отметим среди них следующие:
+\begin{itemize}
+    \item GridLayout.spec(int): задает столбец или строку, где располагается
+    виджет. Отсчет ячеек начинается с нуля. Виджет занимает только
+    одну ячейку;
+    \item GridLayout.spec(int, int): первый параметр задает столбец или
+    строку, где располагается виджет. Второй параметр указывает,
+    насколько ячеек растягивается виджет;
+    \item GridLayout.spec(int, android.widget.GridLayout.Alignment): первый
+    параметр задает столбец или строку, где располагается виджет.
+    Второй параметр устанавливает выравнивание виджета;
+    \item GridLayout.spec(int, int, android.widget.GridLayout.Alignment):
+    первый параметр задает столбец или строку, где располагается
+    виджет. Второй параметр указывает, насколько ячеек растягивается
+    виджет. Третий параметр устанавливает выравнивание виджета.
+\end{itemize}
+Пример применения GridLayout.LayoutParams:
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Kotlin}, label=lst:GridLayout.LayoutParams]
+val btn = Button(this)
+        btn.text = "нажми"
+        val layoutParams = GridLayout.LayoutParams()
+        layoutParams.columnSpec = GridLayout.spec(0, 2)
+        layoutParams.rowSpec = GridLayout.spec(1, 1)
+        layoutParams.leftMargin = 5
+        layoutParams.rightMargin = 5
+        layoutParams.topMargin = 4
+        layoutParams.bottomMargin = 4
+        layoutParams.width = GridLayout.LayoutParams.MATCH_PARENT
+        layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT
+        gridLayout.addView(btn, layoutParams)
+\end{lstlisting}
+Например, реализуем в коде второй пример из данного материала:
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Kotlin}, label=lst:GridLayoutP]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val gridLayout = GridLayout(this)
+        // количество строк
+        // количество строк
+        gridLayout.rowCount = 3
+        // количество столбцов
+        // количество столбцов
+        gridLayout.columnCount = 3
+        for (i in 1..3) {
+            val btn = Button(this)
+            btn.text = i.toString()
+            gridLayout.addView(btn)
+        }
+        val btn4 = Button(this)
+        btn4.text = "4"
+        val layoutParams4 = GridLayout.LayoutParams()
+        layoutParams4.columnSpec = GridLayout.spec(0, 2)
+        layoutParams4.width = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, 180f,
+            resources.displayMetrics
+        ).toInt()
+        gridLayout.addView(btn4, layoutParams4)
+        val btn5 = Button(this)
+        btn5.text = "5"
+        val layoutParams5 = GridLayout.LayoutParams()
+        layoutParams5.rowSpec = GridLayout.spec(1, 2)
+        layoutParams5.height = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, 100f,
+            resources.displayMetrics
+        ).toInt()
+        gridLayout.addView(btn5, layoutParams5)
+        val btn6 = Button(this)
+        btn6.text = "6"
+        val btn7 = Button(this)
+        btn7.text = "7"
+        gridLayout.addView(btn6)
+        gridLayout.addView(btn7)
+
+        setContentView(gridLayout)
+    }
+\end{lstlisting}
+\section{ScrollView}
+Контейнер ScrollView предназначен для создания прокрутки для такого
+интерфейса, все элементы которого одномоментно не могут поместиться на
+экране устройства. ScrollView может вмещать только один элемент, поэтому
+если мы хотим разместить несколько элементов, то их надо поместить в
+какой-нибудь контейнер.
+Например, определим ряд TextView с большими текстами:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:ScrollView]
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent">
+ <LinearLayout
+ android:layout_width="match_parent"
+ android:layout_height="match_parent"
+ android:orientation="vertical"
+ >
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="What is Lorem Ipsum?"
+ android:textSize="34sp" />
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="Lorem Ipsum is simply dummy text of the printing and
+typesetting industry...like Aldus PageMaker including versions of Lorem Ipsum."
+ android:textSize="14sp"/>
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="Why do we use it?"
+ android:layout_marginTop="16dp"
+ android:textSize="34sp"/>
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="Lorem Ipsum is simply dummy text of the printing and
+typesetting industry...like Aldus PageMaker including versions of Lorem Ipsum."
+ android:textSize="14sp"/>
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="Where can I get some?"
+ android:layout_marginTop="16dp"
+ android:textSize="34sp"/>
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="There are many variations of passages of Lorem Ipsum
+available ... or non-characteristic words etc."
+ android:textSize="14sp"/>
+ </LinearLayout>
+</ScrollView>
+\end{lstlisting}
+Так как в ScrollView можно поместить только один элемент, то все TextView
+заключены в LinearLayout. И если площадь экрана будет недостаточной,
+чтобы поместить все содержимое LinearLayout, то станет доступной
+прокрутка:
+\img{png_16}{ScrollView в Android Studio}
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Kotlin}, label=lst:ScrollViewK]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val gridLayout = GridLayout(this)
+        // количество строк
+        // количество строк
+        gridLayout.rowCount = 3
+        // количество столбцов
+        // количество столбцов
+        gridLayout.columnCount = 3
+        for (i in 1..3) {
+            val btn = Button(this)
+            btn.text = i.toString()
+            gridLayout.addView(btn)
+        }
+        val btn4 = Button(this)
+        btn4.text = "4"
+        val layoutParams4 = GridLayout.LayoutParams()
+        layoutParams4.columnSpec = GridLayout.spec(0, 2)
+        layoutParams4.width = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, 180f,
+            resources.displayMetrics
+        ).toInt()
+        gridLayout.addView(btn4, layoutParams4)
+        val btn5 = Button(this)
+        btn5.text = "5"
+        val layoutParams5 = GridLayout.LayoutParams()
+        layoutParams5.rowSpec = GridLayout.spec(1, 2)
+        layoutParams5.height = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, 100f,
+            resources.displayMetrics
+        ).toInt()
+        gridLayout.addView(btn5, layoutParams5)
+        val btn6 = Button(this)
+        btn6.text = "6"
+        val btn7 = Button(this)
+        btn7.text = "7"
+        gridLayout.addView(btn6)
+        gridLayout.addView(btn7)
+
+        setContentView(gridLayout)
+    }
+\end{lstlisting}
+\section{Вложенные layout}
+Одна layout может содержать другую layout. Для этого применяется элемент
+include.
+Например, добавим в папку res/layout два файла layout, которые пусть будут
+называться text\_panel.xml и button\_panel.xml:
+\img{png_17}{Include layouts in Android}
+В файле text\_panel.xml определим следующий код:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:layout]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ xmlns:app="http://schemas.android.com/apk/res-auto"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content">
+ <TextView
+ android:id="@+id/clicksText"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:textSize="30sp"
+ android:text="0 Clicks"
+ app:layout_constraintLeft_toLeftOf="parent"
+ app:layout_constraintTop_toTopOf="parent"
+ />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+По сути, здесь просто определено поле TextView для вывода текста.
+В файле button\_panel.xml определим следующую разметку:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:button_panel.xml]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ xmlns:app="http://schemas.android.com/apk/res-auto"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content">
+ <Button
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:text="Click"
+ android:onClick="onClick"
+ app:layout_constraintLeft_toLeftOf="parent"
+ app:layout_constraintTop_toTopOf="parent"
+ />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+Здесь определена кнопка, нажатия которой мы будем обрабатывать.
+Основным файлом разметки, который определяет интерфейс приложения,
+по-прежнему является activity\_main.xml. Изменим его:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:text_panel.xml]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ xmlns:app="http://schemas.android.com/apk/res-auto"
+ xmlns:tools="http://schemas.android.com/tools"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent"
+ android:padding="16dp"
+ tools:context=".MainActivity">
+ <include
+ android:id="@+id/textView"
+ layout="@layout/text_panel"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ app:layout_constraintLeft_toLeftOf="parent"
+ app:layout_constraintTop_toTopOf="parent"
+ app:layout_constraintBottom_toTopOf="@+id/button"
+ />
+ <include
+ android:id="@+id/button"
+ layout="@layout/button_panel"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ app:layout_constraintLeft_toLeftOf="parent"
+ app:layout_constraintTop_toBottomOf="@+id/textView"
+ />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+С помощью ConstraintLayout весь интерфейс здесь организуется в виде
+вертикального стека. С помощью элементов include внутрь ConstraintLayout
+добавляется содержимое файлов text\_panel.xml и button\_panel.xml. Для
+указания названия файла применяется атрибут layout.
+Это все равно, что, если бы мы напрямую вместо элемента include добавили
+содержимое файлов. Однако такой способ имеет свои преимущества.
+Например, какая-то часть разметки, группа элементов управления может
+повторяться в различных activity. И чтобы не определять по сто раз эти
+элементы, можно вынести их в отдельный файл layout и с помощью include
+подключать их.
+После добавления в ConstraintLayout к элементам include можно применять
+все те стандартные атрибуты, которые применяются в этом контейнере к
+вложенным элементам, например, настроить размеры, расположение. Также
+стоит отметить, что добавлять внешние layout можно не только в
+ConstraintLayout, но и в другие контейнеры (LinearLayout, RelativeLayout и
+т.д.)
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Kotlin}, label=lst:clicks]
+package com.example.mirea_mob_4sem
+
+import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import android.widget.EditText
+import android.widget.RelativeLayout
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+
+
+class MainActivity : AppCompatActivity() {
+private var clicks : Int = 0
+override fun onCreate(savedInstanceState: Bundle?) {
+super.onCreate(savedInstanceState)
+setContentView(R.layout.activity4)
+}
+
+fun onClick(view: View?) {
+val clicksText = findViewById<TextView>(R.id.clicksText)
+clicks++
+clicksText.text = "$clicks Clicks"
+}
+
+}
+\end{lstlisting}
+В MainActivity мы можем обращаться к элементам во вложенных файлах
+layout. Например, мы можем установить обработчик нажатия кнопки, в
+котором при нажатии изменять текст в TextView.
+\img{png_18}{Вложенные файлы layout в Activity в Android}
+При этом мы несколько раз можем добавлять в один файл layout другой файл
+layout. Для этого вначале изменим файл button\_panel.xml следующим
+образом:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:button_panel2.xml]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ xmlns:app="http://schemas.android.com/apk/res-auto"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:background="#3F51B5"
+ android:paddingTop="10dp"
+ android:paddingBottom="10dp">
+ <Button
+ android:id="@+id/clickBtn"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ app:layout_constraintLeft_toLeftOf="parent"
+ app:layout_constraintTop_toTopOf="parent"
+ />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+И изменим файл activity\_main.xml:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:activity\_main.xml]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ xmlns:app="http://schemas.android.com/apk/res-auto"
+ xmlns:tools="http://schemas.android.com/tools"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent"
+ android:padding="16dp"
+ tools:context=".MainActivity">
+ <include
+ layout="@layout/text_panel"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ app:layout_constraintLeft_toLeftOf="parent"
+ app:layout_constraintTop_toTopOf="parent"
+ />
+ <include layout="@layout/button_panel"
+ android:id="@+id/plus_button"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ app:layout_constraintLeft_toLeftOf="parent"
+ app:layout_constraintBottom_toBottomOf="parent"
+ app:layout_constraintRight_toLeftOf="@+id/minus_button"/>
+ <include layout="@layout/button_panel"
+ android:id="@+id/minus_button"
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:layout_marginLeft="36dp"
+ app:layout_constraintLeft_toRightOf="@id/plus_button"
+ app:layout_constraintBottom_toBottomOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+Теперь файл button_panel.xml добавляется два раза. Важно, что при
+добавлении этого файла каждому элементу include присвоен определенный
+id. По этому id мы сможем узнать, о каком именно элементе include идет
+речь.
+\img{png_19}{вложение layout с помощью include в android}
+
+\section{Gravity}
+Атрибут gravity задает позиционирование содержимого внутри визуального
+элемента. Он может принимать следующие значения
+\begin{itemize}
+    \item top: элементы размещаются вверху;
+    \item bottom: элементы размещаются внизу;
+    \item left: элементы размещаются в левой стороне;
+    \item right: элементы размещаются в правой стороне контейнера;
+    \item center\_vertical: выравнивает элементы по центру по вертикали;
+    \item center\_horizontal: выравнивает элементы по центру по горизонтали;
+    \item center: элементы размещаются по центру;
+    \item fill\_vertical: элемент растягивается по вертикали;
+    \item fill\_horizontal: элемент растягивается по горизонтали;
+    \item fill: элемент заполняет все пространство контейнера;
+    \item clip\_vertical: обрезает верхнюю и нижнюю границу элементов;
+    \item clip\_horizontal: обрезает правую и левую границу элементов;
+    \item start: элемент позиционируется в начале (в верхнем левом углу);
+    контейнера;
+    \item end: элемент позиционируется в конце контейнера(в верхнем правом
+    углу).
+\end{itemize}
+Например, поместим текст в самый низ в элементе TextView:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:Gravity]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ xmlns:app="http://schemas.android.com/apk/res-auto"
+ xmlns:tools="http://schemas.android.com/tools"
+ android:layout_width="match_parent"
+ android:layout_height="match_parent"
+ tools:context=".MainActivity">
+ <TextView
+ android:gravity="bottom"
+
+ android:layout_width="0dp"
+ android:layout_height="200dp"
+ android:text="Hello Android!"
+ android:textSize="30sp"
+ android:background="#e8eaf6"
+ app:layout_constraintLeft_toLeftOf="parent"
+ app:layout_constraintRight_toRightOf="parent"
+ app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+\img{png_20}{Gravity в Android Studio}
+При необходимости мы можем комбинировать значения, разделяя их
+вертикальной чертой:
+\begin{lstlisting}[language=xml, caption=\leftline{xml}, label=lst:Gravity2]
+<TextView
+ android:gravity="bottom | right"
+
+ android:layout_width="0dp"
+ android:layout_height="200dp"
+ android:text="Hello Android!"
+ android:textSize="30sp"
+ android:background="#e8eaf6"
+ app:layout_constraintLeft_toLeftOf="parent"
+ app:layout_constraintRight_toRightOf="parent"
+ app:layout_constraintTop_toTopOf="parent" />
+\end{lstlisting}
+\img{png_21}{Gravity right bottom в Android}
+\subsection{Программная установка gravity}
+Чтобы установить параметр gravity у элемента надо вызвать метод
+setGravity(). В качестве параметра в метод передается одна из констант
+класса Gravity, которые аналогичны значениям атрибута (за тем
+исключенем, что названия в верхнем регистре):
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Kotlin}, label=lst:gravity]
+    class MainActivity : AppCompatActivity() {
+    private var clicks : Int = 0
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val constraintLayout = ConstraintLayout(this)
+        val textView = TextView(this)
+        textView.text = "Hello Android!"
+        textView.textSize = 30f
+        textView.setBackgroundColor(-0x17150a)
+        textView.gravity = Gravity.CENTER
+        val layoutParams =
+            ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.MATCH_CONSTRAINT, 200)
+        layoutParams.leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
+        layoutParams.rightToRight = ConstraintLayout.LayoutParams.PARENT_ID
+        layoutParams.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+        layoutParams.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
+        textView.layoutParams = layoutParams
+        constraintLayout.addView(textView)
+        setContentView(constraintLayout)
+    }
+
+}
+\end{lstlisting}
+\img{png_22}{Программная установка layout\_gravity в Android}
