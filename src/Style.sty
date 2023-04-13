@@ -102,16 +102,22 @@
 \lstdefinelanguage{XML}{
 	commentstyle=\color{gray},
 	breaklines=true,
+	basicstyle=\footnotesize,
+	numbers=left,
 	morestring=[b]",
 	morestring=[s]{>}{<},
 	morecomment=[s]{<!--}{-->},
 	stringstyle=\color{black},
 	identifierstyle=\color{red},
 	keywordstyle=\color{cyan},
+	frame=tblr ,
 }
 
 \lstdefinelanguage{Kotlin}{
 	comment=[l]{//},
+	breaklines=true,
+	numbers=left,
+	basicstyle=\footnotesize,
 	commentstyle={\color{gray}\ttfamily},
 	emph={filter, first, firstOrNull, forEach, lazy, map, mapNotNull, println},
 	emphstyle={\color{OrangeRed}},
@@ -125,4 +131,5 @@
 	ndkeywordstyle={\color{BurntOrange}\bfseries},
 	sensitive=true,
 	stringstyle={\color{ForestGreen}\ttfamily},
+	frame=tblr ,
 }
