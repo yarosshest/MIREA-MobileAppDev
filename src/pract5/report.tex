@@ -415,14 +415,68 @@ private val checkedBoxes : ArrayList<String> = arrayListOf()
 ToggleButton подобно элементу CheckBox может пребывать в двух 
 состояниях: отмеченном и неотмеченном, причем для каждого состояния мы 
 можем отдельно установить свой текст.
-Данный виджет проиллюстрирован на рисунке~\ref{fig:togglebutton}.
+Данный виджет проиллюстрирован на листинге~\ref{lst:ToggleButton}.
 
-\begin{image}
-	\includegraphics[width=0.8\textwidth]{Screenshot from 2023-03-25 17-55-50.png}
-	\caption{Пример использования ToggleButton}
-	\label{fig:togglebutton}
-\end{image}
+\begin{lstlisting}[language=xml, caption=\leftline{ToggleButton XML}, label=lst:ToggleButton]
+<ToggleButton
+        android:id="@+id/toggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOn="Ligth on"
+        android:textOff="Ligth off"
+        android:onClick="onToggleClicked"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+\end{lstlisting}
 
+\begin{lstlisting}[language=Kotlin, caption=\leftline{ToggleButton Kotlin}, label=lst:ToggleButtonKotlin]
+fun onToggleClicked(view: View) {
+
+        val on = (view as ToggleButton).isChecked
+        if (on) {
+            Toast.makeText(this, "Ligth on", Toast.LENGTH_LONG).show()
+            view.setBackgroundColor(WHITE)
+        } else {
+            Toast.makeText(this, "Ligth off!", Toast.LENGTH_LONG).show()
+            view.setBackgroundColor(BLACK)
+        }
+    }
+\end{lstlisting}
+\img{png7}{ToggleButton}
+
+
+
+
+\subsection{ToggleButton в коде}
+Создание элемента ToggleButton в коде:
+\begin{lstlisting}[language=Kotlin, caption=\leftline{ToggleButton Kotlin}, label=lst:ToggleButtoninKotlin]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val layout = ConstraintLayout(this)
+        val layoutParams = ConstraintLayout.LayoutParams(
+            ConstraintLayout.LayoutParams.WRAP_CONTENT,
+            ConstraintLayout.LayoutParams.WRAP_CONTENT
+        )
+        val toggleButton = ToggleButton(this)
+        toggleButton.textOff = "Выключено"
+        toggleButton.textOn = "Включено"
+        toggleButton.text = "Выключено"
+        toggleButton.setOnClickListener { view ->
+            val on = (view as ToggleButton).isChecked
+            if (on) {
+                Toast.makeText(applicationContext, "Свет включен", Toast.LENGTH_LONG).show()
+                view.setBackgroundColor(Color.WHITE)
+            } else {
+                Toast.makeText(applicationContext, "Свет выключен!", Toast.LENGTH_LONG).show()
+                view.setBackgroundColor(Color.GRAY)
+            }
+        }
+        layoutParams.leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
+        layoutParams.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+        layout.addView(toggleButton)
+        setContentView(layout)
+    }
+\end{lstlisting}
 \section{Класс RadioButton}
 Схожую с флажками функциональность предоставляют 
 переключатели, которые представлены классом RadioButton. Но в отличие от 
@@ -430,13 +484,52 @@ ToggleButton подобно элементу CheckBox может пребыва�
 один переключатель. Чтобы создать список переключателей для выбора, 
 вначале надо создать объект RadioGroup, который будет включать в себя все 
 переключатели.
-Данный виджет проиллюстрирован на рисунке~\ref{fig:radiobutton}.
+Данный виджет проиллюстрирован на листинге~\ref{lst:RadioGroup}.
+\begin{lstlisting}[language=xml, caption=\leftline{RadioGroup XML}, label=lst:RadioGroup]
+<TextView android:id="@+id/selection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="26sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
 
-\begin{image}
-	\includegraphics[width=0.8\textwidth]{Screenshot from 2023-03-25 18-03-35.png}
-	\caption{Пример использования RadioGroup}
-	\label{fig:radiobutton}
-\end{image}
+    <RadioGroup
+        android:id="@+id/radios"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/selection"
+        >
+
+        <RadioButton android:id="@+id/java"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Java"
+            android:onClick="onRadioButtonClicked"/>
+        <RadioButton android:id="@+id/kotlin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Kotlin"
+            android:onClick="onRadioButtonClicked"/>
+    </RadioGroup>
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{RadioGroup Kotlin}, label=lst:RadioGroupKotlin]
+fun onRadioButtonClicked(view: View) {
+        val checked = (view as RadioButton).isChecked
+        val selection = findViewById<TextView>(R.id.selection)
+        when (view.getId()) {
+            R.id.java -> if (checked) {
+                selection.text = "Java"
+            }
+            R.id.kotlin -> if (checked) {
+                selection.text = "Kotlin"
+            }
+        }
+    }
+\end{lstlisting}
+\img{png8}{RadioGroup}
 
 \section{Элемент DatePicker}
 
