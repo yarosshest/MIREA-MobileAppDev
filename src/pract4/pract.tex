@@ -1,4 +1,4 @@
-\graphicspath{{./png}}
+\graphicspath{{png/}}
 \section*{\LARGE{Цель практической работы}}
 \addcontentsline{toc}{section}{Цель практической работы}
 В практической работе было рассмотренно как использовать базовые возможности
@@ -409,14 +409,17 @@ override fun onCreate(savedInstanceState: Bundle?) {
             RelativeLayout.LayoutParams.MATCH_PARENT,
             RelativeLayout.LayoutParams.WRAP_CONTENT
         )
-        editTextParams.addRule(RelativeLayout.CENTER_IN_PARENT)
+        editTextParams.addRule(
+            RelativeLayout.CENTER_IN_PARENT)
         relativeLayout.addView(editText, editTextParams)
         val buttonParams = RelativeLayout.LayoutParams(
             RelativeLayout.LayoutParams.WRAP_CONTENT,
             RelativeLayout.LayoutParams.WRAP_CONTENT
         )
-        buttonParams.addRule(RelativeLayout.BELOW, editText.id)
-        buttonParams.addRule(RelativeLayout.ALIGN_RIGHT, editText.id)
+        buttonParams.addRule(RelativeLayout.BELOW,
+                                editText.id)
+        buttonParams.addRule(RelativeLayout.ALIGN_RIGHT,
+                                editText.id)
         relativeLayout.addView(button, buttonParams)
         setContentView(relativeLayout)
     }
@@ -447,6 +450,7 @@ buttonParams.addRule(RelativeLayout.BELOW, editText.getId());
 Тем самым мы указываем относительно какого элемента надо задать
 расположение.
 \section{TableLayout}
+
 Контейнер TableLayout структурирует элементы управления в виде таблицы
 по столбцам и строкам.
 Определим в файле activity\_main.xml элемент
