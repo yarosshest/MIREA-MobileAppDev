@@ -1,0 +1,326 @@
+\graphicspath{{./img}}
+
+\section*{\LARGE{Введение}}
+\addcontentsline{toc}{section}{Введение}
+\textbf{Цель}: научиться работать с ресурсами в Android Studio.\par
+Ресурс в приложении Android представляет собой файл, например, файл
+разметки интерфейса или некоторое значение, например, простую строку. То
+есть ресурсы представляют собой и файлы разметки, и отдельные строки, и
+звуковые файлы, файлы изображений и т.д. Все ресурсы находятся в проекте
+в каталоге res. Для различных типов ресурсов, определенных в проекте, в
+каталоге res создаются подкаталоги. Поддерживаемые подкаталоги:
+
+\begin{itemize}
+	\item animator/: xml-файлы, определяющие анимацию свойств;
+	\item anim/: xml-файлы, определяющие tween-анимацию;
+	\item color/: xml-файлы, определяющие список цветов;
+	\item drawable/: Графические файлы (.png, .jpg, .gif);
+	\item mipmap/: Графические файлы, используемые для иконок приложения;
+		под различные разрешения экранов;
+	\item layout/: xml-файлы, определяющие пользовательский интерфейс
+		приложения;
+	\item menu/: xml-файлы, определяющие меню приложения;
+	\item raw/: различные файлы, которые сохраняются в исходном виде;
+	\item values/: xml-файлы, которые содержат различные используемые в
+		приложении значения, например, ресурсы строк;
+	\item xml/: Произвольные xml-файлы;
+	\item font/: файлы с определениями шрифтом и расширениями .ttf, .otf или
+		.ttc, либо файлы XML, который содержат элемент <font-family>.
+\end{itemize}
+
+Существует два способа доступа к ресурсам: в файле исходного кода и в
+файле xml.
+Ссылка на ресурсы в коде
+Тип ресурса в данной записи ссылается на одно из пространств (вложенных
+классов), определенных в файле R.java, которые имеют соответствующие им
+типы в xml:
+
+\begin{itemize}
+	\item R.drawable (ему соответствует тип в xml drawable);
+	\item R.id (id);
+	\item R.layout (layout);
+	\item R.string (string);
+	\item R.attr (attr);
+	\item R.plural (plurals);
+	\item R.array (string-array).
+\end{itemize}
+
+Нередко возникает необходимость ссылаться на ресурс в файле xml,
+например, в файле, который определяет визуальный интерфейс, к примеру, в
+activity\_main.xml. Ссылки на ресурсы в файлах xml имеют следующую
+формализованную форму: \verb|@[имя_пакета:]тип_ресурса/имя_ресурса|. Где:
+\begin{itemize}
+	\item имя\_пакета представляет имя пакета, в котором ресурс находится
+		(указывать необязательно, если ресурс находится в том же пакете);
+	\item тип\_ресурса представляет подкласс, определенный в классе R для
+		типа ресурса;
+	\item имя\_ресурса имя файла ресурса без расширения или значение
+		атрибута android:name в XML-элементе (для простых значений).
+\end{itemize}
+
+\clearpage
+
+\section*{\LARGE{Выполнение практической работы}}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Ресурсы строк}
+Ресурсы строк --- один из важных компонентов приложения. Мы используем
+их при выведении названия приложения, различного текста, например, текста
+кнопок и т.д.\par
+XML-файлы, представляющие собой ресурсы строк, находятся в проекте в
+каталоге res/values. По умолчанию ресурсы строк находятся в файле strings.xml,
+который может выглядеть следующим образом.\par
+\begin{lstlisting}[language=xml, caption=\leftline{Использование ресурсов строк в XML-коде}, label=lst:xml:string]
+<TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="defalt"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.1" />
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Использование ресурсов строк в коде}, label=lst:string]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_work61)
+
+        val textView = findViewById<TextView>(R.id.textView)
+        textView.setText(R.string.text61)
+    }
+\end{lstlisting}
+
+\img{img1}{Использование ресурсов строк}
+
+\section{Форматирование строк}
+Android позволяет применять к ресурсам строк форматирование.
+
+\begin{lstlisting}[language=xml, caption=\leftline{Форматная строка в каталоге ресурсов}, label=lst:xml:format]
+<TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/text62"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.1" />
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Форматная строка в каталоге ресурсов}, label=lst:kot:format]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_work62)
+
+        val str = getString(R.string.text62, "Kotlin")
+
+        val textView = findViewById<TextView>(R.id.textView)
+        textView.text = str
+    }
+\end{lstlisting}
+
+\img{img2}{Форматная строка в каталоге ресурсов}
+
+\section{Ресурсы Plurals}
+Plurals представляют еще один вид набора строк.
+Ресурс plurals используется, напрмер если нужно использовать одно
+существительное с разными окончаниями, изменяемое в зависимости от
+числительного, которое с ним употребляется.\par
+Пример файла ресурсов изображен на рисунке~\ref{fig:xml:plurals}.
+
+\begin{lstlisting}[language=xml, caption=\leftline{Объявление ресурсов Plurals}, label=lst:xml:plurals]
+<plurals name="flowers" translatable="false">
+        <item quantity="one">%d цветок</item>
+        <item quantity="few">%d цветка</item>
+        <item quantity="many">%d цветков</item>
+    </plurals>
+\end{lstlisting}
+
+\img{img3}{Ресурсы Plurals}
+
+Для задания ресурса используется элемент \texttt{<plurals>}, для которого
+существует атрибут \texttt{name}, получающий в качестве значения произвольное
+название, по которому потом ссылаются на данный ресурс.\par
+Сами наборы строк вводятся дочерними элементами \texttt{<item>}. Этот элемент
+имеет атрибут \texttt{quantity}, который имеет значение, указывающее,
+когда эта строка используется. Данный атрибут может принимать следующие
+значения:
+
+\begin{itemize}
+	\item zero: строка для количества в размере 0;
+	\item one: строка для количества в размере 1 (для русского языка - для
+		задания всех количеств, оканчивающихся на 1, кроме 11);
+	\item two: строка для количества в размере 2;
+	\item few: строка для небольшого количества.
+\end{itemize}
+
+Причем в данном случае многое зависит от конкретного языка. А система
+сама позволяет определить, какое значение брать для того или иного числа.
+
+С помощью метода \texttt{getQuantityString} можно получить значение ресурса.
+Первым параметром передаем идентификатор ресурса. Вторым параметром
+идет значение. для которого нужно найти нужную строку. Третий параметр
+представляет собой значение, которое будет вставляться на место
+плейсхолдера \%d.\par
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{спользование ресурсов Plurals в коде}, label=lst:kot:plurals]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_work63)
+
+        val seekBar = findViewById<SeekBar>(R.id.seekBar)
+        val textView = findViewById<TextView>(R.id.seekBarValue)
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                textView.text = resources.getQuantityString(R.plurals.flowers, progress, progress)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
+    }
+\end{lstlisting}
+
+\section{String array}
+Еще одним видом строковых ресурсов является string-array или массив строк.
+Ресурс задается с помощью элемента \texttt{<string-array>}. Фактически он
+определяет набор строк. А каждая отдельная строка задается с помощью
+элемента \texttt{<item>}.
+\begin{lstlisting}[language=xml, caption=\leftline{Объявление ресурсов string array}, label=lst:xml:array]
+<string-array name="languages">
+        <item>Java</item>
+        <item>Kotlin</item>
+        <item>Dart</item>
+    </string-array>
+\end{lstlisting}
+
+С помощью метода getStringArray получаем ресурс в массив строк и затем с
+помощью цикла сложили из массива одну строку и передаем ее в TextView.
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Использование ресурсов string array в в коде}, label=lst:kot:array]
+class Work64 : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val res = resources
+        val languages = res.getStringArray(R.array.languages)
+        var langs = ""
+        for (lang in languages) {
+            langs += "$lang "
+        }
+        val textView = TextView(this)
+        textView.text = langs
+        textView.textSize = 28f
+        setContentView(textView)
+    }
+}
+\end{lstlisting}
+\img{img4}{Ресурсы string array}
+
+\section{Ресурсы dimension}
+Определение размеров должно находиться в каталоге res/values в файле с
+любым произвольным именем.
+
+\begin{lstlisting}[language=xml, caption=\leftline{Объявление ресурсов dimension}, label=lst:xml:dimension]
+<resources>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="horizontal_margin">64dp</dimen>
+    <dimen name="vertical_margin">32dp</dimen>
+    <dimen name="text_size">32sp</dimen>
+</resources>
+\end{lstlisting}
+
+Как и другие ресурсы, ресурс dimension определяется в корневом элементе
+\texttt{<resources>}. Тег \texttt{<dimen>} обозначает ресурс и в качестве
+значния принимает некоторое значение размера в одной из принятых единиц
+измерения (dp, sp, pt, px, mm, in). Более подробно установка размеров
+рассматривалась в одной из прошлых практических занятий.\par
+
+\begin{lstlisting}[language=xml, caption=\leftline{Использование ресурсов dimension в XML-коде}, label=lst:xml:dimension:use]
+<TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello MIREA"
+        android:background="#eaeaea"
+
+        android:layout_marginTop="@dimen/vertical_margin"
+        android:layout_marginStart="@dimen/horizontal_margin"
+        android:textSize="@dimen/text_size"
+
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+\end{lstlisting}
+
+Для получения ресурсов в коде применяется метод \texttt{getDimension()}
+класса \texttt{Resources}.
+\img{img5}{Ресурсы dimension}
+
+\section{Ресурсы Color}
+В приложении Android также можно определять ресурсы цветов (Color). Они
+должны храниться в файле по пути res/values и также, как и ресурсы строк,
+заключены в тег \texttt{<resources>}. Так, по умолчанию при создании самого
+простого проекта в папку res/values добавляется файл colors.xml
+
+\begin{lstlisting}[language=xml, caption=\leftline{Объявление ресурсов colors}, label=lst:xml:color]
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>
+\end{lstlisting}
+
+
+Цвет определяется с помощью элемента \texttt{<color>}. Его атрибут
+\texttt{name} устанавливает название цвета, которое будет использоваться
+в приложении, а шестнадцатеричное число --- значение цвета.
+Для задания цветовых ресурсов можно использовать следующие форматы:
+
+\begin{itemize}
+	\item \#RGB (\#F00 --- 12-битное значение)
+	\item \#ARGB (\#8F00 --- 12-битное значение с добавлением альфа-канала)
+	\item \#RRGGBB (\#FF00FF --- 24-битное значение)
+	\item \#AARRGGBB (\#80FF00FF --- 24-битное значение с добавлением
+		альфа-канала)
+\end{itemize}
+
+
+\begin{lstlisting}[language=xml, caption=\leftline{Объявление ресурсов colors}, label=lst:xml:use]
+<TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello Android"
+
+        android:background="@color/purple_500"
+        android:textColor="@color/purple_700"
+
+        android:textSize="32sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+\end{lstlisting}
+
+\img{img6}{Ресурсы Color}
+\clearpage
+
+\section*{\LARGE{Вывод}}
+\addcontentsline{toc}{section}{Вывод}
+В этой практической работе были получены знания для создания и
+использования различный ресурсов. Освоены такие виды ресурсов как:
+
+\begin{itemize}
+	\item ресурсы строк;
+	\item форматирование строк;
+	\item ресурсы Plurals;
+	\item ресурсы string array;
+	\item ресурсы dimension;
+	\item ресурсы Color.
+\end{itemize}
+

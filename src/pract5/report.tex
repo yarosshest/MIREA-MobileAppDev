@@ -558,13 +558,39 @@ DatePicker представляет элемент для выбора даты.
 		поля выбора года.
 \end{itemize}
 
-Данный виджет проиллюстрирован на рисунке~\ref{fig:datepicker}.
+Данный виджет проиллюстрирован на листинге~\ref{lst:datepicker}.
 
-\begin{image}
-	\includegraphics[width=0.8\textwidth]{Screenshot from 2023-03-25 18-07-26.png}
-	\caption{Пример использования DatePicker}
-	\label{fig:datepicker}
-\end{image}
+\begin{lstlisting}[language=xml, caption=\leftline{datepicker XML}, label=lst:datepicker]
+<TextView android:id="@+id/dateTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="26sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <DatePicker android:id="@+id/datePicker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dateTextView" />
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{datepicker Kotlin}, label=lst:datepickerKotlin]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_work513)
+
+        val dateTextView = findViewById<TextView>(R.id.dateTextView)
+        val datePicker = findViewById<DatePicker>(R.id.datePicker)
+        datePicker.init(
+            2020, 2, 1
+        ) { view, _, _, _ ->
+            dateTextView.text = "Дата: " + view.dayOfMonth + "/" +
+                    (view.month + 1) + "/" + view.year
+        }
+    }
+\end{lstlisting}
+\img{png9}{Пример использования DatePicker}
 
 \section{Элемент TimePicker}
 TimePicker представляет виджет для выбора времени, который может 
@@ -589,13 +615,39 @@ TimePicker представляет виджет для выбора време�
 		в TimePicker в виде объекта.
 \end{itemize}
 
-Данный виджет проиллюстрирован на рисунке~\ref{fig:timepicker}.
+Данный виджет проиллюстрирован на рисунке~\ref{lst:timepicker}.
 
-\begin{image}
-	\includegraphics[width=0.8\textwidth]{Screenshot from 2023-03-25 18-09-56.png}
-	\caption{Пример использования TimePicker}
-	\label{fig:timepicker}
-\end{image}
+\begin{lstlisting}[language=xml, caption=\leftline{timepicker XML}, label=lst:timepicker]
+<TextView android:id="@+id/timeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="26sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TimePicker android:id="@+id/timePicker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/timeTextView" />
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{timepicker Kotlin}, label=lst:timepickerKotlin]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_work514)
+
+        val timeTextView = findViewById<TextView>(R.id.timeTextView)
+        val timePicker = findViewById<TimePicker>(R.id.timePicker)
+
+        timePicker.setOnTimeChangedListener { view, hourOfDay, minute ->
+            timeTextView.text = "Время: $hourOfDay:$minute"
+        }
+    }
+\end{lstlisting}
+\img{png10}{Пример использования TimePicker}
+
 
 \section{Элемент SeekBar (Ползунок)}
 Элемент SeekBar выполняет роль ползунка, то есть шкалу делений, на 
@@ -609,14 +661,43 @@ TimePicker представляет виджет для выбора време�
 		которое находится в диапазоне между минимальным и максимальным.
 \end{itemize}
 
-Данный виджет проиллюстрирован на рисунке~\ref{fig:seekbar}.
+Данный виджет проиллюстрирован на листинге~\ref{lst:seekbar}.
 
-\begin{image}
-	\includegraphics[width=0.8\textwidth]{Screenshot from 2023-03-25 18-11-54.png}
-	\caption{Пример использования SeekBar}
-	\label{fig:seekbar}
-\end{image}
+\begin{lstlisting}[language=xml, caption=\leftline{timepicker XML}, label=lst:seekbar]
+<TextView android:id="@+id/seekBarValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="26sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
+    <SeekBar
+        android:id="@+id/seekBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:progress="20"
+        android:max="50"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/seekBarValue" />
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{seekbar Kotlin}, label=lst:seekbarKotlin]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_work515)
+        val seekBar = findViewById<SeekBar>(R.id.seekBar)
+        val textView = findViewById<TextView>(R.id.seekBarValue)
+        seekBar.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                textView.text = progress.toString()
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
+    }
+\end{lstlisting}
+\img{png11}{Пример использования SeekBar}
 
 \clearpage
 

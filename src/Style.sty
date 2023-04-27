@@ -1,29 +1,43 @@
-\ProvidesPackage{Style}
-
-\usepackage{cmap} % for pdfLaTeX
-\usepackage[T1,T2A]{fontenc} % correct encoding for pdfLaTeX
-\usepackage[utf8]{inputenc} % correct encoding source file
-\usepackage[english,russian]{babel} % correct language
-\usepackage[labelsep=period]{caption}
-\usepackage{color}
-\usepackage[dvipsnames]{xcolor}
+\ProvidesPackage{PsiDirectory:C:/Users/yaros/IdeaProjects/MIREA-MobileAppDev/src/Style}
+\RequirePackage{cmap} % for pdfLaTeX
+\RequirePackage[T1,T2A]{fontenc} % correct encoding for pdfLaTeX
+\RequirePackage[utf8]{inputenc} % correct encoding source file
+\RequirePackage[english,russian]{babel} % correct language
+\RequirePackage[labelsep=period]{caption}
+\RequirePackage[russian]{babel}
+\RequirePackage{color}
+\RequirePackage[dvipsnames]{xcolor}
+\RequirePackage{textcomp}
+\RequirePackage[T2A]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage{indentfirst}
+\RequirePackage{fancybox}
+\RequirePackage[russian]{babel}
+\RequirePackage{array}
+\RequirePackage{graphicx}
+\RequirePackage{fancyhdr}
+\RequirePackage{verbatim}
+\RequirePackage{titlesec}
+\RequirePackage{caption}
+\RequirePackage{listings}
 \frenchspacing
 \pagestyle{plain}
+\lstset{inputencoding=utf8x, extendedchars=\true}
 
-\usepackage[left=3cm, right=1.5cm, vmargin=2cm]{geometry}
+\RequirePackage[left=3cm, right=1.5cm, vmargin=2cm]{geometry}
 \linespread{1.5} % line spacing 1.5
-\usepackage{indentfirst} % indent first paragraph
+\RequirePackage{indentfirst} % indent first paragraph
 \setlength{\parindent}{1.25cm}
 \sloppy
 
 % for graphics
-\usepackage{graphicx}
-\usepackage{amsmath}
-\usepackage{pdfpages}
-\usepackage{listings}
-\usepackage{hyperref}
+\RequirePackage{graphicx}
+\RequirePackage{amsmath}
+\RequirePackage{pdfpages}
+\RequirePackage{listings}
+\RequirePackage{hyperref}
 
-\usepackage{enumitem}
+\RequirePackage{enumitem}
 \setlist{nosep}
 \setlist[enumerate]{label*=\arabic*.}
 
@@ -34,6 +48,7 @@
 \providecommand{\No}{\textnumero}
 
 \renewcommand{\figurename}{Рисунок}
+
 
 
 \newcommand{\img}[2] {
