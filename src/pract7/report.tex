@@ -286,12 +286,9 @@ double, long, short, byte, char, массивы этих типов, либо о
 Serializable.\par
 Чтобы получить отправленные данные при загрузке SecondActivity, можно
 воспользоваться методом \texttt{get()}, в который передается ключ объекта:
-
-\begin{lstlisting}[language=Java
-	, caption=\leftline{Получение намеренья}
-	]
-Bundle arguments = getIntent().getExtras();
-String name = arguments.get("hello").toString();
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Получение намеренья}, label=lst:extras]
+	val arguments = intent.extras
+	val name = arguments!!["hello"].toString()
 \end{lstlisting}
 
 В зависимости от типа отправляемых данных при их получении мы можем
@@ -317,37 +314,18 @@ String name = arguments.get("hello").toString();
 		интерфейса Serializable.
 \end{itemize}
 
-Пример использования показан в
-листнингах~\ref{lst:intent:put}\,-\,\ref{lst:intent:get}..
+\begin{lstlisting}[language=Kotlin, caption=\leftline{},label={lst:Bundle}]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_work72)
 
-\begin{lstlisting}[language=Java
-	, caption=\leftline{}
-	, label=lst:intent:put
-	]
-Button button = findViewById(R.id.button);
-button.setOnClickListener(new View.OnClickListener() {
-	@Override
-	public void onClick(View v) {
-		Intent intent = new Intent(MainActivity.this, SecondActivity.class);
+        val progress = intent.getIntExtra("progress", 0)
+        val progressBar = findViewById<ProgressBar>(R.id.progressBar)
 
-		EditText editText = findViewById(R.id.input);
-		intent.putExtra("msg", editText.getText().toString());
-		
-		startActivity(intent);
-	}
-});
+        progressBar.progress = progress
+    }
 \end{lstlisting}
 
-\begin{lstlisting}[language=Java
-	, caption=\leftline{}
-	, label=lst:intent:get
-	]
-Bundle arguments = getIntent().getExtras();
-String msg = arguments.get("msg").toString();
-
-TextView textView = findViewById(R.id.output);
-textView.setText(msg);
-\end{lstlisting}
 
 \section{Передача сложных объектов}
 В Android можно передавать передавать сложные объекты.
@@ -357,45 +335,44 @@ textView.setText(msg);
 реализует интерфейс Serializable.
 Таким образом, мы можем передать один единственый объект вместо набора
 разрозненных данных.\par
-Пример использования показан в листнинге~\ref{lst:serializable}.
+Пример использования показан в листнинге~\ref{lst:serializable1}.
 
-\begin{lstlisting}[language=Java
-	, caption=\leftline{}
-	, label=lst:model:msg
-	]
-public class Msg implements Serializable {
-	private String message;
+\begin{lstlisting}[language=Kotlin, caption=\leftline{}, label=lst:serializable1]
+class Msg : Serializable {
+    var value: Int? = null
+    var time: LocalDateTime? = null
 
-	public Msg(String message) {
-		this.message = message;
-	}
-
-	public String getMessage() {
-		return message;
-	}
-
-	public void setMessage(String message) {
-		this.message = message;
-	}
+    constructor(value: Int, time: LocalDateTime) {
+        this.value = value
+        this.time = time
+    }
 }
 \end{lstlisting}
 
-\begin{lstlisting}[language=Java
-	, caption=\leftline{}
-	, label=lst:serializable
-	]
-Button button = findViewById(R.id.button);
-button.setOnClickListener(new View.OnClickListener() {
-	@Override
-	public void onClick(View v) {
-		Intent intent = new Intent(MainActivity.this, SecondActivity.class);
+\begin{lstlisting}[language=Kotlin, caption=\leftline{}, label=lst:serializable2]
+fun transition(v : View){
+        val seekBar = findViewById<SeekBar>(R.id.seekBar)
+        val intent = Intent(this, Work74::class.java)
 
-		Msg msg = new Msg(editText.getText().toString());
-		intent.putExtra("model:msg", msg);
+        val msg = Msg(seekBar.progress, LocalDateTime.now())
+        intent.putExtra("msg", msg)
+        startActivity(intent)
+    }
+\end{lstlisting}
 
-		startActivity(intent);
-	}
-});
+\begin{lstlisting}[language=Kotlin, caption=\leftline{}, label=lst:serializable3]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_work74)
+
+        val msg = intent.getSerializableExtra("msg") as Msg
+
+        val textView = findViewById<TextView>(R.id.textView)
+        textView.text = msg.time.toString()
+
+        val progressBar = findViewById<ProgressBar>(R.id.progressBar)
+        progressBar.progress = msg.value!!
+    }
 \end{lstlisting}
 
 \section{Parcelable}
