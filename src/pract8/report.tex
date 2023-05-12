@@ -1,0 +1,388 @@
+\graphicspath{{./eighth/img}}
+
+\section*{\LARGE{Введение}}
+\addcontentsline{toc}{section}{Введение}
+Организация приложения на основе нескольких activity не всегда может быть
+оптимальной. Мир ОС Android довольно сильно фрагментирован и состоит
+из многих устройств. И если для мобильных аппаратов с небольшими
+экранами взаимодействие между разными activity выглядит довольно
+неплохо, то на больших экранах --- планшетах, телевизорах окна activity
+смотрелись бы не очень в силу большого размера экрана. Собственно
+поэтому и появилась концепция фрагментов.\par
+Фрагмент представляет кусочек визуального интерфейса приложения,
+который может использоваться повторно и многократно. У фрагмента может
+быть собственный файл layout, у фрагментов есть свой собственный
+жизненный цикл. Фрагмент существует в контексте activity и имеет свой
+жизненный цикл, вне activity обособлено он существовать не может. Каждая
+activity может иметь несколько фрагментов.\par
+Для работы с фрагментами необходимо добавить в файл build.gradle строку:
+
+\begin{verbatim}
+implementation "androidx.fragment:fragment:1.3.6"
+\end{verbatim}
+
+\clearpage
+
+\section*{\LARGE{Выполнение практической работы}}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Добавление фрагмента в Activity}
+Для использования фрагмента добавим его в MainActivity. Для этого
+изменим файл activity\_main.xml, которая определяет интерфейс для
+MainActivity (Листнинг~\ref{lst:xml:add:fragment}).
+\begin{lstlisting}[language=XML
+	, caption=\leftline{}
+	, label=lst:xml:add:fragment
+	]
+<androidx.fragment.app.FragmentContainerView
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/fragment_container_view"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:name="com.example.fragmentapp.ContentFragment" />
+\end{lstlisting}
+
+Для добавления фрамента применяется элемент FragmentContainerView. По
+сути, FragmentContainerView представляет объект View, который расширяет
+класс FrameLayout и предназначен специально для работы с фрагментами.
+Собственно кроме фрагментов он больше ничего содержать не может.\par
+Его атрибут \texttt{android:name} указывает на имя класса фрагмента, который
+будет использоваться. В моем случае полное имя класса фрагмента с учетов
+пакета \texttt{com.example.fragmentapp.ContentFragment}.\par
+Код класса фрагмента показан на листнинг~\ref{lst:class}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{}, label={lst:class}]
+	class Fragment81() : Fragment() {
+	override fun onCreateView(
+			inflater: LayoutInflater, container: ViewGroup?,
+			savedInstanceState: Bundle?
+		): View? {
+			return inflater.inflate(R.layout.fragment_fragment81, container, false)
+		}
+	}
+\end{lstlisting}
+
+Код класса MainActivity остается тем же, что и при создании проекта.
+
+\section{Добавление логики к фрагменту}
+Пример использования логики в фрагментах показан
+в листнинге~\ref{lst:fragment:action}.
+\begin{lstlisting}[language=Kotlin, caption=\leftline{}, label={lst:fragment:action}]
+override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val countriesList = view.findViewById<ListView>(R.id.countriesList)
+        val adapter: Any =
+            ArrayAdapter<Any?>(requireContext(), android.R.layout.simple_list_item_1, countries)
+        countriesList.adapter = adapter as ListAdapter?
+        countriesList.onItemClickListener =
+            OnItemClickListener { parent, v, position, id -> // получаем выбранный элемент
+                val selectedItem = parent.getItemAtPosition(position) as String
+                fragmentSendDataListener!!.onSendData(selectedItem)
+            }
+    }
+\end{lstlisting}
+
+\section{Добавление фрагмента в коде}
+Кроме определения фрагмента в xaml-файле интерфейса мы можем добавить
+его динамически в activity.\par
+Для этого изменим файл activity\_main.xml как показано в
+листнинге~\ref{lst:xml:frg:java}.
+
+\begin{lstlisting}[language=XML
+	, caption=\leftline{}
+	, label=lst:xml:frg:java
+	]
+<androidx.fragment.app.FragmentContainerView
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/fragment_container_view"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent" />
+\end{lstlisting}
+
+И также изменим класс MainActivit как показано
+в листнинге~\ref{lst:frg}.
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{}, label={lst:frg}]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_work82)
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .add(R.id.fragment_container_view, Fragment81::class.java, null)
+                .commit()
+        }
+    }
+\end{lstlisting}
+
+
+Метод \texttt{getSupportFragmentManager()} возвращает объект FragmentManager,
+который управляет фрагментами.\par
+Объект FragmentManager с помощью метода \texttt{beginTransaction()} создает
+объект FragmentTransaction.\par
+FragmentTransaction выполняет два метода: \texttt{add()} и \texttt{commit()}.
+Метод \texttt{add()} добавляет фрагмент:
+\texttt{add(R.id.fragment\_container\_view, new 
+ContentFragment())} --- первым аргументом передается ресурс разметки, в
+который надо добавить фрагмент (это определенный в activity\_main.xml
+элемент \texttt{androidx.fragment.app.FragmentContainerView}).
+И метод \texttt{commit()} подтвержает и завершает операцию добавления.\par
+Итоговый результат такого добавления фрагмента будет тем же, что и при
+явном определении фрагмента через элемент \texttt{FragmentContainerView} в
+разметке интерфейса.
+
+\section{Взаимодействие между фрагментами}
+Одна activity может использовать несколько фрагментов, например, с одной
+стороны список, а с другой --- детальное описание выбранного элемента
+списка. В такой конфигурации activity использует два фрагмента, которые
+между собой должны взаимодействовать. Рассмотрим базовые принципы
+взаимодействия фрагментов в приложении.\par
+Разметка первого фрагмента показана в листнинге~\ref{lst:xml:frg:first}.
+
+\begin{lstlisting}[language=XML
+	, caption=\leftline{}
+	, label=lst:xml:frg:first
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+    <ListView
+        android:id="@+id/countriesList"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+    </ListView>
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Разметка второго фрагмента показана в листнинге~\ref{lst:xml:frg:second}.
+
+\begin{lstlisting}[language=XML
+	, caption=\leftline{}
+	, label=lst:xml:frg:second
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+    <TextView
+        android:id="@+id/detailsText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="No select"
+        android:textSize="22sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Фрагменты не могут напрямую взаимодействовать между собой. Для этого
+надо обращаться к контексту, в качестве которого выступает класс Activity.
+Для обращения к activity, как правило, создается вложенный интерфейс. В
+данном случае он называется \texttt{OnFragmentSendDataListener} с одним
+методом:
+
+\begin{verbatim}
+interface OnFragmentSendDataListener {
+	void onSendData(String data);
+}
+private OnFragmentSendDataListener fragmentSendDataListener;
+\end{verbatim}
+
+Но чтобы взаимодействовать с другим фрагментом через activity, нам надо
+прикрепить текущий фрагмент к activity. Для этого в классе фрагмента
+определен метод onAttach(Context context). В нем происходит установка
+объекта OnFragmentSendDataListener:
+
+\begin{verbatim}
+fragmentSendDataListener = (OnFragmentSendDataListener) context;
+\end{verbatim}
+
+При обработке нажатия на элемент в списке мы можем отправить Activity
+данные о выбранном объекте:
+
+\begin{verbatim}
+String selectedItem = (String)parent.getItemAtPosition(position);
+fragmentSendDataListener.onSendData(selectedItem);
+\end{verbatim}
+
+Таким образом, при выборе объекта в списке MainActivity получит
+выбранный объект.
+
+И в конце изменим код MainActivity, как показано
+в листнинге~\ref{lst:interaction:main}.
+
+\begin{lstlisting}[language=Kotlin
+	, caption=\leftline{}
+	, label=lst:interaction:main
+	]
+class Work83 : AppCompatActivity() ,Fragmet831.OnFragmentSendDataListener {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_work83)
+    }
+
+    override fun onSendData(data: String?) {
+        (supportFragmentManager
+            .findFragmentById(R.id.detailFragment) as Fragmet832?)?.setSelectedItem(data)
+    }
+}
+\end{lstlisting}
+
+Для взаимодействия фрагмента ListFragment c другим фрагментом через
+MainActivity надо, чтобы эта activity реализовывала интерфейс
+\texttt{OnFragmentSendDataListener}. Для этого реализуем метод
+\texttt{onSendData()},
+который получает фрагмент \texttt{DetailFragment} и вызывает у него метод
+\texttt{setSelectedItem()}.\par
+В итоге получится, что при выборе в списке во фрагменте ListFragment будет
+срабатывать слушатель списка и в частности его метод
+\texttt{onItemClick(AdapterView<?> parent, View v, int position, long id)},
+который вызовет метод
+\texttt{fragmentSendDataListener.onSendData(selectedItem);}.
+fragmentSendDataListener устанавливается как MainActivity, поэтому при
+этом будет вызван метод setSelectedItem у фрагмента DetailFragment. Таким
+образом, произойдет взаимодействие между двумя фрагментами.
+
+\section{Фрагменты в альбомном и портретном режиме}
+В прошлом материале было разработано приложение, которое выводит оба
+фрагмента на экран. Продолжим работу с этим проектом. Всего было создано
+два фрагмента: ListFragment для отображения списка и DetailFragment для
+отображения выбранного элемента в списке. И MainActivity выводила оба
+фрагмента на экран.\par
+Но отображение двух и более фрагментов при портретной ориентации не
+очень оптимально. Например, в прошлом материале приложение выглядело
+так.\par
+Но если список большой, то второй фрагмент, который отображает
+выбранный элемент, соответственно уходит вниз. При альбомной
+ориентации получится расположение еще более неоптимально. Поэтому
+сначала изменим файл activity\_main.xml, чтобы более удобно располагать
+фрагменты в альбомной ориентации, как показано
+в листнинге~\ref{lst:xml:frg:orient}.
+
+\begin{lstlisting}[language=XML
+	, caption=\leftline{}
+	, label=lst:xml:frg:orient
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/listFragment"
+		android:layout_width="0dp"
+		android:layout_height="0dp"
+		android:name="com.example.eighth.ListFragment"
+		app:layout_constraintLeft_toLeftOf="parent"
+		app:layout_constraintTop_toTopOf="parent"
+		app:layout_constraintRight_toLeftOf="@id/detailFragment"
+		app:layout_constraintBottom_toBottomOf="parent" />
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/detailFragment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:name="com.example.eighth.DetailFragment"
+        app:layout_constraintLeft_toRightOf="@id/listFragment"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Теперь рассмотрим, как более удачно расположить фрагменты при
+портретной ориентации. Нередко в этом случае решение следующее ---
+одномоментно экран отображает только один фрагмент.\par
+Итак, создадим в проекте в каталоге \textbf{res}, где хранятся все ресурсы,
+подкаталог \textbf{layout-port}, который будет хранить файлы интерфейса
+для портретной ориентации. Для этого переключимся к полному виду проекта.
+Нажмем на папку res правой кнопкой мыши и в контекстном меню выберем
+\textbf{New -> Android Resource Directory}.
+Далее добавим в res/layout-port новый файл activity\_main.xml и определим в
+нем код, как показано в листнинге~\ref{lst:xml:actwthfrg}.
+
+\begin{lstlisting}[language=XML
+	, caption=\leftline{}
+	, label=lst:xml:actwthfrg
+	]
+<androidx.fragment.app.FragmentContainerView
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/listFragment"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:name="com.example.fragmentapp.ListFragment" />
+\end{lstlisting}
+
+Этот файл будет использоваться для портретной ориентации MainActivity.
+Таким образом, MainActivity в портретном режиме будет отображать только
+один список.\par
+Теперь добавим новую activity, которую назовем DetailActivity.\par
+Таким образом, интерфейс DetailActivity будет определяться загружаемым
+фрагментом DetailFragment.\par
+Далее в коде DetailActivity определим код, как показано
+в листнинге~\ref{lst:java:frg:orient}.
+
+\begin{lstlisting}[language=Kotlin
+	, caption=\leftline{}
+	, label=lst:java:frg:orient
+	]
+val SELECTED_ITEM = "SELECTED_ITEM"
+    var selectedItem: String? = "Не выбрано"
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            finish()
+            return
+        }
+        setContentView(R.layout.activity_work84_detail)
+        val extras = intent.extras
+        if (extras != null) selectedItem = extras.getString(SELECTED_ITEM)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (supportFragmentManager
+            .findFragmentById(R.id.detailFragment) as Fragmet832?)?.setSelectedItem(selectedItem)
+    }
+\end{lstlisting}
+
+Код MainActivity при этом будет выглядеть как показано
+в листнинг~\ref{lst:java:main:orient}.
+
+\begin{lstlisting}[language=Kotlin
+	, caption=\leftline{}
+	, label=lst:java:main:orient
+	]
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_work84)
+    }
+
+    override fun onSendData(data: String?) {
+        (supportFragmentManager
+            .findFragmentById(R.id.detailFragment) as Fragmet832?)?.setSelectedItem(data)
+    }
+\end{lstlisting}
+
+\clearpage
+
+\section*{\LARGE{Вывод}}
+\addcontentsline{toc}{section}{Вывод}
+В этой практической работе были получены знания об создании и
+упарвлении фрагментами. А также научились организовавыть взаимодействие
+между ними.\par
+Также с помощью фрагментов создали приложение, которое можно использовать
+в вертикальном и горизонтальном положениях телефона.
+
