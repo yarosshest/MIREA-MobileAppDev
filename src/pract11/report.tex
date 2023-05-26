@@ -1,0 +1,799 @@
+\graphicspath{{./eleventh/img}}
+
+\section*{\LARGE{Введение}}
+\addcontentsline{toc}{section}{Введение}
+
+\textbf{Задание}:
+\begin{itemize}
+	\item Реализовать пример с использованием потоков.
+	\item Реализовать потоки, фрагменты и ViewModel.
+	\item Изучить порядок и реализовать применение класса AsyncTask.
+	\item Реализовать применение AsyncTask с фрагментом.
+	\item Изучить работу с сетью и классом WebView. Реализовать пример.
+	\item Реализовать пример загрузки данных c применением класса
+		HttpsURLConnection.
+\end{itemize}
+
+\clearpage
+
+\section*{\LARGE{Выполнение практической работы}}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Создание потоков и визуальный интерфейс}
+Когда мы запускаем приложение на Android, система создает поток, который
+называется основным потоком приложения или UI-поток. Этот поток
+обрабатывает все изменения и события пользовательского интерфейса.
+Однако для вспомогательных операций, таких как отправка или загрузка
+файла, продолжительные вычисления и т.д., мы можем создавать
+дополнительные потоки.\par
+Для создания новых потоков нам доcтупен стандартный функционал класса
+Thread из базовой библиотеки Java из пакета java.util.concurrent, которые
+особой трудности не представляют. Тем не менее трудности могут
+возникнуть при обновлении визуального интерфейса из потока.\par
+Например, создадим простейшее приложение с использованием потоков.
+Определим разметку интерфейса в файле ресурсов, как показано
+в листинге~\ref{lst:xml:thread}.
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:thread
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello World!"
+        android:textSize="22sp"
+        app:layout_constraintBottom_toTopOf="@id/button"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start thread"
+        app:layout_constraintTop_toBottomOf="@id/textView"
+        app:layout_constraintLeft_toLeftOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Здесь определена кнопка для запуска фонового потока, а также текстовое
+поле для отображения некоторых данных, которые будут генерироваться
+в запущенном потоке.\par
+Далее определим в java-классе код, показанный
+в листинге~\ref{lst:java:thread}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:thread
+	]
+TextView textView = findViewById(R.id.textView);
+Button button = findViewById(R.id.button);
+button.setOnClickListener((v) -> {
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				Calendar c = Calendar.getInstance();
+				int hours = c.get(Calendar.HOUR_OF_DAY);
+				int minutes = c.get(Calendar.MINUTE);
+				int seconds = c.get(Calendar.SECOND);
+				String time = hours + ":" + minutes + ":" + seconds;
+				textView.post(new Runnable() {
+					public void run() {
+						textView.setText(time);
+					}
+				});
+			}
+		};
+		Thread thread = new Thread(runnable);
+		thread.start();
+});
+\end{lstlisting}
+
+Итак, здесь к кнопке прикреплен обработчик нажатия, который запускает
+новый поток. Создавать и запускать поток в Java можно различными способами.
+В данном случае сами действия, которые выполняются в потоке, определяются
+в методе run() объекта Runnable.
+
+\section{Потоки, фрагменты и ViewModel}
+При использовании вторичных потоков следует учитывать следующий момент.
+Более оптимальным способом является работа потоков с фрагментом,
+нежели непосредственно с activity. Например, определим в файле
+разметки, как показано в листинге~\ref{lst:xml:thread-fragments-viewmodel}.
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:thread-fragments-viewmodel
+	]
+<Button
+	android:id="@+id/progressBtn"
+	android:text="Start"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	app:layout_constraintBottom_toTopOf="@id/statusView"
+	app:layout_constraintLeft_toLeftOf="parent"
+	app:layout_constraintTop_toTopOf="parent"/>
+<TextView
+	android:id="@+id/statusView"
+	android:text="Status"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	app:layout_constraintBottom_toTopOf="@id/indicator"
+	app:layout_constraintLeft_toLeftOf="parent"
+	app:layout_constraintTop_toBottomOf="@id/progressBtn" />
+<ProgressBar
+	android:id="@+id/indicator"
+	style="@android:style/Widget.ProgressBar.Horizontal"
+	android:layout_width="0dp"
+	android:layout_height="wrap_content"
+	android:max="100"
+	android:progress="0"
+	app:layout_constraintLeft_toLeftOf="parent"
+	app:layout_constraintRight_toRightOf="parent"
+	app:layout_constraintTop_toBottomOf="@id/statusView"/>
+\end{lstlisting}
+
+Здесь определена кнопка для запуска вторичной задачи и элементы TextView
+и ProgressBar, которые отображают индикацию выполнения задачи.\par
+В классе Activity определим код, как показано
+в листинге~\ref{lst:java:thread-fragments-viewmodel}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:thread-fragments-viewmodel
+	]
+btnFetch.setOnClickListener((v) -> {
+	Runnable runnable = new Runnable() {
+		@Override
+		public void run() {
+			for(; currentValue <= 100; currentValue++){
+				try {
+					statusView.post(new Runnable() {
+						public void run() {
+							indicatorBar.setProgress(currentValue);
+							statusView.setText("Status: " + currentValue);
+						}
+					});
+					Thread.sleep(400);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	};
+	Thread thread = new Thread(runnable);
+	thread.start();
+});
+\end{lstlisting}
+
+Здесь по нажатию кнопки мы запускаем задачу Runnable, в которой в цикле
+от 0 до 100 изменяем показатели ProgressBar и TextView, имитируя некоторую
+долгую работу.\par
+Однако если в процессе работы задачи мы изменим ориентацию мобильного
+устройства, то произойдет пересоздание activity, и приложение перестанет
+работать должным образом.
+
+\subsection{Добавление ViewModel}
+Для подобных случаев в качестве решения проблемы предлагается использовать
+ViewModel. Итак, добавим в тот же каталог новый класс MyViewModel
+с кодом, показанным в листинге~\ref{lst:java:viewmodel}
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:viewmodel
+	]
+public class ThreadFragmentViewModel extends ViewModel {
+	private MutableLiveData<Boolean> isStarted = new MutableLiveData<>(false);
+	private MutableLiveData<Integer> value;
+
+	public ThreadFragmentViewModel() {
+	}
+
+	public ThreadFragmentViewModel(@NonNull Closeable... closeables) {
+		super(closeables);
+	}
+
+	public LiveData<Integer> getValue() {
+		if (value == null) {
+			value = new MutableLiveData<Integer>(0);
+		}
+		return value;
+	}
+
+	public void execute(){
+		if(!isStarted.getValue()){
+			isStarted.postValue(true);
+			Runnable runnable = new Runnable() {
+				@Override
+				public void run() {
+					for(int i = value.getValue(); i <= 100; i++){
+						try {
+							value.postValue(i);
+							Thread.sleep(400);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			};
+			Thread thread = new Thread(runnable);
+			thread.start();
+		}
+	}
+}
+\end{lstlisting}
+
+Итак, здесь определен класс MyViewModel, который унаследован от класса
+ViewModel, специально предназначенного для хранения и управления состоянием
+или моделью.\par
+В качестве состояния здесь определены для объекта.
+В первую очередь, это числовое значение, к которым будут привязан виджеты
+из активити. И во-вторых, нам нужен некоторый индикатор того,
+что поток уже запущен, чтобы по нажатию на кнопку не было запущено лишних
+потоков.\par
+Теперь задействуем наш класс MyViewModel и для этого изменим код класса
+активити, как показано в листинге~\ref{}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:
+	]
+ProgressBar indicatorBar = findViewById(R.id.indicator);
+TextView statusView = findViewById(R.id.statusView);
+Button btnFetch = findViewById(R.id.progressBtn);
+
+ThreadFragmentViewModel model = new ViewModelProvider(this)
+		.get(ThreadFragmentViewModel.class);
+model.getValue().observe(this, value -> {
+	indicatorBar.setProgress(value);
+	statusView.setText("Status: " + value);
+});
+btnFetch.setOnClickListener(v -> model.execute());
+\end{lstlisting}
+
+Метод observe() в качестве первого параметра принимает владельца функции
+обсервера --- в данном случае текущий объект MainActivity.
+А в качестве второго параметра --- функцию обсервера
+(а точнее объект интерфейса Observer). Функция обсервера принимает один
+параметр --- новое значение отслеживаемой переменной (то есть в данном
+случае переменной value). Получив новое значение переменной value,
+мы изменяем параметры виджетов.\par
+Таким образом, при каждом изменении значения в переменной value
+виджеты получат ее новое значение.
+
+\subsection{Использование фрагментов}
+Аналогично мы можем использовать фрагементы. Итак, добавим в проект
+новый фрагмент, который назовем ProgressFragment.\par
+Определим для него новый файл разметки интерфейса
+fragment\_progress.xml, как показано
+в листинге~\ref{lst:xml:progress-fragment}.
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:progress-fragment
+	]
+<Button
+	android:id="@+id/progressBtn"
+	android:text="Start"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	app:layout_constraintBottom_toTopOf="@id/statusView"
+	app:layout_constraintLeft_toLeftOf="parent"
+	app:layout_constraintTop_toTopOf="parent"/>
+<TextView
+	android:id="@+id/statusView"
+	android:text="Status"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	app:layout_constraintBottom_toTopOf="@id/indicator"
+	app:layout_constraintLeft_toLeftOf="parent"
+	app:layout_constraintTop_toBottomOf="@id/progressBtn" />
+<ProgressBar
+	android:id="@+id/indicator"
+	style="@android:style/Widget.ProgressBar.Horizontal"
+	android:layout_width="0dp"
+	android:layout_height="wrap_content"
+	android:max="100"
+	android:progress="0"
+	app:layout_constraintLeft_toLeftOf="parent"
+	app:layout_constraintRight_toRightOf="parent"
+	app:layout_constraintTop_toBottomOf="@id/statusView"/>
+\end{lstlisting}
+
+Сам класс фрагмента ProgressFragment изменим следующим образом,
+как показано в листинге~\ref{lst:java:progress-fragment}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:progress-fragment
+	]
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+						 Bundle savedInstanceState) {
+	View view = inflater.inflate(R.layout.fragment_progress, container, false);
+
+	ProgressBar indicatorBar = (ProgressBar) view.findViewById(R.id.indicator);
+	TextView statusView = (TextView) view.findViewById(R.id.statusView);
+	Button btnFetch = (Button) view.findViewById(R.id.progressBtn);
+
+	ThreadFragmentViewModel model = new ViewModelProvider(requireActivity())
+		.get(ThreadFragmentViewModel.class);
+
+	model.getValue().observe(getViewLifecycleOwner(), value -> {
+		indicatorBar.setProgress(value);
+		statusView.setText("Status: " + value);
+	});
+	btnFetch.setOnClickListener(v -> model.execute());
+
+	return view;
+}
+\end{lstlisting}
+
+Здесь аналогичным образом применяется класс MyViewModel. Единственно
+для получения ассоциируемой с фрагментом Activity здесь применяется
+метод requireActivity(). А для получения владельца жизненного цикла -
+метод getViewLifecycleOwner.\par
+Теперь свяжем фрагмент с activity. Для этого определим в файле
+ресурсов код, как показано в листинге~\ref{lst:xml:main:progress-fragment}.
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:main:progress-fragment
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.fragment.app.FragmentContainerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fragment_container_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:name="com.example.eleven.ProgressFragment" />
+\end{lstlisting}
+
+\section{Класс AsyncTask}
+В прошлых материалах был описан общий подход, который применяется
+сейчас для запуска в приложении нового потока и обновления в нем
+пользовательского интерфейса. Рассмотрим другой подход, который
+представляет класс AsyncTask. Хотя примение AsyncTask в современных
+приложениях Android устарел. Тем не менее, поскольку он по-прежнему
+широко применяется, также рассмотрим его.\par
+Итак, создадим простейшее приложение с использованием AsyncTask.
+Определим следующую разметку интерфейса в файле ресурсов,
+как показано в листинге~\ref{lst:xml:async-task}.
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:async-task
+	]
+<LinearLayout
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content">
+	<TextView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:textSize="22sp"
+		android:id="@+id/clicksView"
+		android:text="Clicks: 0"/>
+	<Button
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:id="@+id/clicksBtn"
+		android:text="Click" />
+</LinearLayout>
+
+<Button
+	android:id="@+id/progressBtn"
+	android:text="Start"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content" />
+
+<TextView
+	android:id="@+id/statusView"
+	android:text="Status"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content" />
+<ProgressBar
+	android:id="@+id/indicator"
+	style="@android:style/Widget.ProgressBar.Horizontal"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:max="100"
+	android:progress="0" />
+\end{lstlisting}
+
+Здесь определена кнопка для запуска фонового потока, а также текстовое
+поле и прогрессбар для индикации выполнения задачи. Кроме того, здесь
+определены дополнительная кнопка, которая увеличивает числов кликов,
+и текстовое поле, оторое выводит число кликов.\par
+Далее определим в классе активити код, как показано
+в листинге~\ref{lst:java:async-task}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:async-task
+	]
+int[] integers=null;
+int clicks = 0;
+ProgressBar indicatorBar;
+TextView statusView;
+TextView clicksView;
+Button progressBtn;
+Button clicksBtn;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_async_task);
+
+	integers = new int[100];
+	for (int i = 0; i < 100; i++) {
+		integers[i] = i + 1;
+	}
+
+	indicatorBar = (ProgressBar) findViewById(R.id.indicator);
+	statusView = findViewById(R.id.statusView);
+	progressBtn = findViewById(R.id.progressBtn);
+
+	progressBtn.setOnClickListener((v) -> new ProgressTask().execute());
+
+	clicksView = findViewById(R.id.clicksView);
+	clicksBtn = findViewById(R.id.clicksBtn);
+
+	clicksBtn.setOnClickListener((v) -> {
+		clicks++;
+		clicksView.setText("Clicks: " + clicks);
+	});
+}
+
+class ProgressTask extends AsyncTask<Void, Integer, Void> {
+	@Override
+	protected Void doInBackground(Void... unused) {
+		for (int i = 0; i < integers.length; i++) {
+			publishProgress(i);
+			SystemClock.sleep(400);
+		}
+		return(null);
+	}
+
+	@Override
+	protected void onProgressUpdate(Integer... items) {
+		indicatorBar.setProgress(items[0] + 1);
+		statusView.setText("Status: " + String.valueOf(items[0] + 1));
+	}
+
+	@Override
+	protected void onPostExecute(Void unused) {
+		Toast.makeText(getApplicationContext()
+				, "Work complete"
+				, Toast.LENGTH_SHORT).show();
+	}
+}
+\end{lstlisting}
+
+AsyncTask содержит четыре метода, которые можно переопределить:
+
+\begin{itemize}
+	\item \texttt{doInBackground()}: выполняется в фоновом потоке,
+		должен возвращать определенный результат;
+	\item \texttt{onPreExecute()}: вызывается из главного потока перед
+		запуском метода doInBackground();
+	\item \texttt{onPostExecute()}: выполняется из главного потока после
+		завершения работы метода doInBackground();
+	\item \texttt{onProgressUpdate()}: позволяет сигнализировать
+		пользователю о выполнении фонового потока.
+\end{itemize}
+
+\subsection{AsyncTask и фрагменты}
+При использовании AsyncTask следует учитывать следующий момент. Более
+оптимальным способом является работа AsyncTask с фрагментом, нежели
+непосредственно с activity. Например, если мы возьмем проект из прошлого
+материала, запустим приложение и изменим ориентацию мобильного
+устройства, то произойдет пересоздание activity. В случае изменения
+орентации устройства поток AsyncTask будет продолжать обращаться к
+старой activity, вместо новой. Поэтому в этом случае лучше использовать
+фрагменты.\par
+Определим новый файл разметки интерфейса
+fragment\_progress.xml, как показано
+в листинге~\ref{lst:xml:async-task:fragment}.
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:async-task:fragment
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/activity_main"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <fragment
+        android:id="@+id/progressFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.example.eleven.ProgressSecondFragment"/>
+</LinearLayout>
+\end{lstlisting}
+
+Сам класс фрагмента ProgressFragment заполним следующим образом кодом,
+показанным в листинге~\ref{lst:java:async-task:fragment}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:async-task:fragment
+	]
+int[] integers=null;
+ProgressBar indicatorBar;
+TextView statusView;
+@Override
+public void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setRetainInstance(true);
+}
+@Override
+public View onCreateView(LayoutInflater inflater, ViewGroup container,
+						 Bundle savedInstanceState) {
+	View view = inflater.inflate(R.layout.fragment_progress, container, false);
+	integers = new int[100];
+	for(int i=0;i<100;i++) {
+		integers[i] = i + 1;
+	}
+	indicatorBar = view.findViewById(R.id.indicator);
+	statusView = view.findViewById(R.id.statusView);
+	Button btnFetch = view.findViewById(R.id.progressBtn);
+	btnFetch.setOnClickListener((v) -> {
+			new ProgressTask().execute();
+	});
+	return view;
+}
+class ProgressTask extends AsyncTask<Void, Integer, Void> {
+	@Override
+	protected Void doInBackground(Void... unused) {
+		for (int i = 0; i<integers.length;i++) {
+			publishProgress(i);
+			SystemClock.sleep(400);
+		}
+		return null;
+	}
+	@Override
+	protected void onProgressUpdate(Integer... items) {
+		indicatorBar.setProgress(items[0]+1);
+		statusView.setText("Status: " + String.valueOf(items[0]+1));
+	}
+	@Override
+	protected void onPostExecute(Void unused) {
+		Toast.makeText(getActivity(), "Work compele",
+						Toast.LENGTH_SHORT)
+				.show();
+	}
+}
+\end{lstlisting}
+
+\section{Работа с сетью. WebView}
+\subsection{WebView}
+WebView представляет простейший элемент для рендеринга html-кода,
+базирующийся на движке WebKit. Благодаря этому мы можем использовать
+WebView как примитивный веб-браузер, просматривая через него контент из
+сети интернет. Использование движка WebKit гарантирует, что отображение
+контента будет происходить примерно такжe, как и в других браузерах,
+построенных на этом движке --- Google Chrome и Safari.\par
+Работать с WebView очень просто. Определим данный элемент в разметке
+layout, как показано в листинге~\ref{lst:xml:webview}.
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:webview
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <WebView
+        android:id="@+id/webBrowser"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Для получения доступа к интернету из приложения, необходимо указать в
+файле манифеста AndroidManifest.xml соответствующее разрешение:
+
+\begin{verbatim}
+<uses-permission android:name="android.permission.INTERNET"/>
+\end{verbatim}
+
+Чтобы загрузить определенную страницу в WebView, через метод loadUrl()
+надо установить ее адрес (Рисунок~\ref{}).
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_web_view);
+
+	WebView browser = findViewById(R.id.webBrowser);
+	browser.loadUrl("https://www.mirea.ru/");
+}
+\end{lstlisting}
+
+\subsection{JavaScript}
+
+По умолчанию в WebView отключен javascript, чтобы его включить надо
+применить метод setJavaScriptEnabled(true) объекта WebSettings:
+
+\begin{verbatim}
+import android.webkit.WebSettings;
+//.....................................
+WebView browser = findViewById(R.id.webBrowser);
+WebSettings webSettings = browser.getSettings();
+webSettings.setJavaScriptEnabled(true);
+\end{verbatim}
+
+\subsection{Load данных и класс HttpURLConnection}
+На сегодняшний день если не все, то большинство Android-устройств имеют
+доступ к сети интернет. А большое количество мобильных приложений так
+или иначе взаимодействуют с средой интернет: загружают файлы,
+авторизуются и получают информацию с внешних веб-сервисов и т.д.
+Рассмотрим, как мы можем использовать в своем приложении доступ к сети
+интернет.\par
+Среди стандартных элементов нам доступен виджет WebView, который
+может загружать контент с определенного url-адреса. Но этим возможности
+работы с сетью в Android не ограничиваются. Для получения данных с
+определенного интернет-ресурса мы можем использовать классы
+HttpUrlConnection (для протокола HTTP) и HttpsUrlConnection (для
+протокола HTTPS) из стандартной библиотеки Java.\par
+Итак, создадим новый проект с пустой MainActivity. Первым делом для
+работы с сетью нам надо установить в файле манифеста
+AndroidManifest.xml соответствующее разрешение:
+
+\begin{verbatim}
+<uses-permission android:name="android.permission.INTERNET"/>
+\end{verbatim}
+
+В файле разметки определим код, как показано
+в листинге~\ref{lst:xml:http-url-connection}.
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:http-url-connection
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    <Button
+        android:id="@+id/downloadBtn"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Load"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/downloadBtn"
+        app:layout_constraintBottom_toTopOf="@id/scrollView" />
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/webView"
+        app:layout_constraintBottom_toBottomOf="parent">
+        <TextView android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Здесь определена кнопка для загрузки данных, а сами данные для примера
+загружаются одновременно в виде строки в текстовое поле и в элемент
+WebView. Так как данных может быть очень много, то текстовое поле
+помещено в элемент ScrollView.\par
+Поскольку загрузка данных может занять некоторое время, то обращение к
+интернет-ресурсу определим в отдельном потоке и для этого напишем код,
+как показано в листинге~\ref{lst:java:http-url-connection}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:http-url-connection
+	]
+private static String url = "https://github.com/AndB0ndar";
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_http_urlconnection);
+
+	TextView contentView = findViewById(R.id.content);
+
+	WebView webView = findViewById(R.id.webView);
+	webView.getSettings().setJavaScriptEnabled(true);
+	Button btnFetch = findViewById(R.id.downloadBtn);
+	btnFetch.setOnClickListener((v) -> {
+		contentView.setText("Load...");
+		new Thread(new Runnable() {
+			public void run() {
+				try{
+					String content = getContent(url);
+					webView.post(new Runnable() {
+						public void run() {
+							webView.loadDataWithBaseURL(url
+								, content,"text/html"
+								, "UTF-8", url);
+							Toast.makeText(getApplicationContext()
+								, "Data load"
+								, Toast.LENGTH_SHORT)
+								.show();
+						}
+					});
+					contentView.post(new Runnable() {
+						public void run() {
+							contentView.setText(content);
+						}
+					});
+				}
+				catch (IOException ex){
+					contentView.post(new Runnable() {
+						public void run() {
+							contentView.setText("Error: "
+								+ ex.getMessage());
+							Toast.makeText(getApplicationContext()
+								, "Error"
+								, Toast.LENGTH_SHORT)
+								.show();
+						}
+					});
+				}
+			}
+		}).start();
+	});
+}
+
+private String getContent(String path) throws IOException {
+	BufferedReader reader=null;
+	InputStream stream = null;
+	HttpsURLConnection connection = null;
+	try {
+		URL url=new URL(path);
+		connection =(HttpsURLConnection)url.openConnection();
+		connection.setRequestMethod("GET");
+		connection.setReadTimeout(10000);
+		connection.connect();
+		stream = connection.getInputStream();
+		reader= new BufferedReader(new InputStreamReader(stream));
+		StringBuilder buf=new StringBuilder();
+		String line;
+		while ((line=reader.readLine()) != null) {
+			buf.append(line).append("\n");
+		}
+		return(buf.toString());
+	}
+	finally {
+		if (reader != null) {
+			reader.close();
+		}
+		if (stream != null) {
+			stream.close();
+		}
+		if (connection != null) {
+			connection.disconnect();
+		}
+	}
+}
+\end{lstlisting}
+
+\clearpage
+
+\section*{\LARGE{Вывод}}
+\addcontentsline{toc}{section}{Вывод}
+В данной практической работе были получены знания об создании и управлении
+потоками. Научились работать как с объектами Thread, так и с AsyncTask.
+Узнали как работать с ViewModel и как применять их со фрагментами.\par
+Также узнали как работать с сетью. Познакомились с виджетом WebView,
+и научились с помощью него открывать страницы из интернета.
+

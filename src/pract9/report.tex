@@ -1,0 +1,1040 @@
+
+\section*{\LARGE{Введение}}
+\addcontentsline{toc}{section}{Введение}
+
+\textbf{Задание}:
+\begin{itemize}
+	\item Изучить применение адаптеров и списков. Реализовать пример связи
+		элемента ListView с источником данных с набором элементов TextView с
+		помощью одного из таких адаптеров - класса ArrayAdapter.
+	\item Реализовать пример с использованием ресурса string-array и ListView.
+	\item Реализовать выбор элемента в ListView.
+	\item Реализовать множественный выбор в списке.
+	\item Реализовать добавление и удаление в ArrayAdapter и ListView
+	\item Реализовать расширение списков и создание адаптера.
+	\item Реализовать оптимизацию адаптера и применение View Holder
+	\item Реализовать сложный список с кнопками
+	\item Реализовать выпадающий список Spinner
+	\item Реализовать обработку выбора элемента используя слушатель
+		OnItemSelectedListener
+	\item Реализовать виджет автодополнения AutoCompleteTextView
+	\item Реализовать виджет MultiAutoCompleteTextView.
+	\item Реализовать пример с элементом GridView
+	\item Реализовать пример с элементом RecyclerView
+	\item Реализовать обработку выбора элемента в RecyclerView
+\end{itemize}
+
+\clearpage
+
+\section*{\LARGE{Выполнение практической работы}}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Адаптеры и списки}
+Android представляет широкую палитру элементов, которые представляют
+списки. Все они является наследниками класса android.widget.AdapterView.
+Это такие виджеты как ListView, GridView, Spinner. Они могут выступать
+контейнерами для других элементов управления.\par
+При работе со списками мы имеем дело с тремя компонентами. Во-первых,
+это визуальный элемент или виджет, который на экране представляет список
+(ListView, GridView) и который отображает данные. Во-вторых, это источник
+данных - массив, объект ArrayList, база данных и т.д., в котором находятся
+сами отображаемые данные. И в-третьих, это адаптер - специальный
+компонент, который связывает источник данных с виджетом списка.
+Одним из самых простых и распространенных элементов списка является
+виджет ListView. Рассмотрим связь элемента ListView с источником данных
+с помощью одного из таких адаптеров --- класса ArrayAdapter.\par
+Класс ArrayAdapter представляет собой простейший адаптер, который
+связывает массив данных с набором элементов TextView, из которых, к
+примеру, может состоять ListView. То есть в данном случае источником
+данных выступает массив объектов. ArrayAdapter вызывает у каждого
+объекта метод \texttt{toString()} для приведения к строковому виду
+и полученную строку устанавливает в элемент TextView.\par
+Пример разметки приложения показан в листниге~\ref{lst:xml:listvw}
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:listvw
+	]
+<TextView
+	android:id="@+id/selection"
+	android:layout_width="0dp"
+	android:layout_height="wrap_content"
+	android:textSize="30sp"
+	app:layout_constraintLeft_toLeftOf="parent"
+	app:layout_constraintRight_toRightOf="parent"
+	app:layout_constraintTop_toTopOf="parent" />
+
+<ListView
+	android:id="@+id/list"
+
+	android:layout_width="match_parent"
+	android:layout_height="0dp"
+
+	android:entries="@array/jobs"
+	app:layout_constraintLeft_toLeftOf="parent"
+	app:layout_constraintRight_toRightOf="parent"
+	app:layout_constraintTop_toBottomOf="@+id/selection">
+</ListView>
+\end{lstlisting}
+
+\section{string-array}
+Чтобы не задавать массив строк программно в коде java,
+подобный массив гораздо удобнее хранить в файле xml в виде ресурса.
+Ресурсы массивов строк представляют элемент типа string-array. Они могут
+находится в каталоге res/values в xml-файле с произвольным именем.\par
+Массив строк задается с помощью элемента \texttt{<string-array>}, атрибут
+name которого может иметь произвольное значение, по которому затем будут
+ссылаться на этот массив. Все элементы массива представляют набор
+значений \texttt{<item>}.\par
+Пример содержимого ресурса показан в листниге~\ref{lst:xml:string-array}.
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:string-array
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="jobs">
+		<item> Accounting technician </item>
+		<item> Fashion designer </item>
+		<item> Engineer, manufacturing systems </item>
+		<item> Development worker, international aid </item>
+		<item> Research scientist (life sciences) </item>
+		<item> Therapist, drama </item>
+		<item> Secretary/administrator </item>
+    </string-array>
+</resources>
+\end{lstlisting}
+
+Тодгда получить ресурс массив строк можно кодом:
+
+\begin{verbatim}
+String[] countries = getResources().getStringArray(R.array.countries);
+\end{verbatim}
+
+\section{Выбор элемента в ListView}
+Кроме простого вывода списка элементов ListView позволяет выбирать
+элемент и обрабатывать его выбор.\par
+Для этого свяжем список ListView с источником данных и закрепим за ним
+слушатель нажатия на элемент списка, как показано
+в листниге~\ref{lst:list:select}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:list:select
+	]
+TextView selection = findViewById(R.id.selection);
+ListView listView = findViewById(R.id.list);
+
+String[] jobs2 = getResources().getStringArray(R.array.jobs);
+ArrayAdapter<String> adapter = new ArrayAdapter(this,
+		android.R.layout.simple_list_item_1, jobs2);
+listView.setAdapter(adapter);
+
+listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+	@Override
+	public void onItemClick(AdapterView<?> parent
+		, View view, int position, long id) {
+		String selectedItem = jobs2[position];
+		selection.setText(selectedItem);
+	}
+ });
+\end{lstlisting}
+
+\section{Реализовать множественный выбор в списке}
+Иногда требуется выбрать не один элемент, как по умолчанию, а несколько.
+Для этого в разметке списка надо установить атрибут
+\texttt{android:choiceMode="multipleChoice"}.\par
+А определение обработки выбора показана в листниге~\ref{lst:list:multy-select}
+
+\begin{lstlisting}[language=Java
+	, label=lst:list:select
+	]
+TextView selection2 = findViewById(R.id.selection2);
+ListView listView2 = findViewById(R.id.list2);
+ArrayAdapter<String> adapter2 = new ArrayAdapter(this,
+		android.R.layout.simple_list_item_multiple_choice, jobs2);
+listView2.setAdapter(adapter2);
+listView2.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+	 @Override
+	 public void onItemClick(AdapterView<?> parent
+		, View v
+		, int position
+		, long id)
+	 {
+		 SparseBooleanArray selected = 
+			listView2.getCheckedItemPositions();
+		 String selectedItems = "";
+		 for(int i = 0; i < jobs2.length; i++) {
+			 if(selected.get(i))
+				 selectedItems += jobs2[i] + ",";
+		 }
+		 selection2.setText("Selected: " + selectedItems);
+	 }
+ });
+\end{lstlisting}
+
+\section{Добавление и удаление в ArrayAdapter и ListView}
+После привязки ListView к источнику данных через адаптер мы можем
+работать с данными - добавлять, удалять, изменять только через адаптер.
+ListView служит только для отображения данных.\par
+Для управления данными мы можем использовать методы адаптера или
+напрямую источника данных. Например, класс ArrayAdapter предоставляет
+следующие методы для управления данными:
+
+\begin{itemize}
+	\item \texttt{void add(T object)}: добавляет элемент object
+		в конец массива;
+	\item \texttt{void addAll(T... items)}: добавляет все элементы items
+		в конец массива;
+	\item \texttt{void addAll(Collection<? extends T> collection)}:
+		добавляет коллекцию элементов collection в конец массива;
+	\item \texttt{void clear()}: удаляет все элементы из списка;
+	\item \texttt{void insert(T object, int index)}: добавляет элемент
+		object в массив по индексу index;
+	\item \texttt{void remove(T object)}: удаляет элемент object из массива.
+\end{itemize}
+
+Однако после применения вышеуказанных методов изменения коснутся
+только массива, выступающего источником данных. Чтобы
+синхронизировать изменения с элементом ListView, надо вызвать у адаптера
+метод \texttt{notifyDataSetChanged()}.\par
+Для вывода списка в xml-файле предназначен ListView с возможностью
+множественного выбора элементов. Для добавления и удаления определены
+две кнопки. Для ввода нового объекта в список предназначено поле EditText.\par
+Код для управления списком показан в листниге~\ref{lst:list:chng}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:list:chng
+	]
+ArrayList<String> users = new ArrayList<String>();
+ArrayList<String> selectedUsers = new ArrayList<String>();
+ArrayAdapter<String> adapter;
+ListView usersList;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_chng_list);
+	Collections.addAll(users, "Katherine", "Lauren", "David"
+		, "Aaron", "April", "Catherine", "Chad")
+	usersList = findViewById(R.id.usersList);
+	adapter = new ArrayAdapter(this,
+			android.R.layout.simple_list_item_multiple_choice, users);
+	usersList.setAdapter(adapter);
+	usersList.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+		@Override
+		public void onItemClick(AdapterView<?> parent, View v, int position,
+								long id)
+		{
+			String user = adapter.getItem(position);
+			if(usersList.isItemChecked(position))
+				selectedUsers.add(user);
+			else
+				selectedUsers.remove(user);
+		}
+	});
+}
+public void add(View view){
+	EditText userName = findViewById(R.id.userName);
+	String user = userName.getText().toString();
+	if(!user.isEmpty()){
+		adapter.add(user);
+		userName.setText("");
+		adapter.notifyDataSetChanged();
+	}
+}
+public void remove(View view){
+	for(int i=0; i< selectedUsers.size();i++){
+		adapter.remove(selectedUsers.get(i));
+	}
+	usersList.clearChoices();
+	selectedUsers.clear();
+	adapter.notifyDataSetChanged();
+}
+\end{lstlisting}
+
+\section{Реализовать расширение списков и создание адаптера}
+Традиционные списки ListView, использующие стандартные адаптеры
+ArrayAdapter, прекрасно работают с массивами строк. Однако чаще мы будем
+сталкиваться с более сложными по структуре списками, где один элемент
+представляет не одну строку, а несколько строк, картинок и других
+компонентов.\par
+Для создания сложного списка нам надо переопределить один из
+используемых адаптеров. Поскольку, как правило, используется
+ArrayAdapter, то именно его мы и переопределим.
+Его код проиллюстрирован в листниге~\ref{lst:adapter:list:state}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:adapter:list:state
+	]
+public class StateAdapter extends ArrayAdapter<State> {
+	private LayoutInflater inflater;
+	private int layout;
+	private List<State> states;
+
+	public StateAdapter(Context context, int resource, List<State> states) {
+		super(context, resource, states);
+		this.states = states;
+		this.layout = resource;
+		this.inflater = LayoutInflater.from(context);
+	}
+
+	public View getView(int position, View convertView, ViewGroup parent) {
+		ViewHolder viewHolder;
+		if(convertView == null){
+			convertView = inflater.inflate(this.layout, parent, false);
+			viewHolder = new ViewHolder(convertView);
+			convertView.setTag(viewHolder);
+		}
+		else{
+			viewHolder = (ViewHolder) convertView.getTag();
+		}
+		State state = states.get(position);
+		viewHolder.imageView.setImageResource(state.getFlagResource());
+		viewHolder.nameView.setText(state.getName());
+		viewHolder.capitalView.setText(state.getCapital());
+		return convertView;
+	}
+
+	static class ViewHolder {
+		ImageView imageView;
+		TextView nameView, capitalView;
+
+		ViewHolder(View view){
+			imageView = view.findViewById(R.id.flag);
+			nameView = view.findViewById(R.id.name);
+			capitalView = view.findViewById(R.id.capital);
+		}
+	}
+}
+\end{lstlisting}
+
+Также определим модель, данные которой будут отображаться в списке
+(Листнинг~\ref{lst:model:state}).
+
+\begin{lstlisting}[language=Java
+	, label=lst:model:state
+	]
+public class State {
+	private String name;
+	private String capital;
+	private int flagResource;
+
+	public State(String name, String capital, int flagResource) {
+		this.name = name;
+		this.capital = capital;
+		this.flagResource = flagResource;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getCapital() {
+		return capital;
+	}
+
+	public void setCapital(String capital) {
+		this.capital = capital;
+	}
+
+	public int getFlagResource() {
+		return flagResource;
+	}
+
+	public void setFlagResource(int flagResource) {
+		this.flagResource = flagResource;
+	}
+}
+\end{lstlisting}
+
+Теперь осталось в классе активити соединить адаптер и ListView,
+как показано в листниге~\ref{lst:list:expansion}.
+\begin{lstlisting}[language=Java
+	, label=lst:list:expansion
+	]
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_states_list);
+	setInitialData();
+	countriesList = findViewById(R.id.state_list);
+	StateAdapter stateAdapter = new StateAdapter(this
+		, R.layout.state_list_item, states);
+	countriesList.setAdapter(stateAdapter);
+	AdapterView.OnItemClickListener itemListener =
+		new AdapterView.OnItemClickListener() {
+		@Override
+		public void onItemClick(AdapterView<?> parent
+			, View v, int position, long id) {
+			State selectedState = (State)parent.getItemAtPosition(position);
+			Toast.makeText(getApplicationContext(), "Was selected point " +
+							selectedState.getName(),
+					Toast.LENGTH_SHORT).show();
+		}
+	};
+	countriesList.setOnItemClickListener(itemListener);
+}
+
+private void setInitialData(){
+	states.add(new State ("Mexico", "Mexico", R.drawable.mx));
+	states.add(new State ("Russia", "Russia", R.drawable.ru));
+	states.add(new State ("UK"
+		, "UK", R.drawable.uk));
+	states.add(new State ("Norvegia", "Norvegia", R.drawable.no));
+	states.add(new State ("German", "German", R.drawable.de));
+}
+\end{lstlisting}
+
+\section{Оптимизация адаптера и применение View Holder}
+Адаптер, написанный в прошлой главе, имеет один очень большой минус~---
+при прокрутке в ListView, если в списке очень много объектов,
+то для каждого элемента,
+когда он попадет в зону видимости, будет повторно вызываться метод
+getView, в котором будет заново создаваться новый объект View.
+Соответственно будет увеличиваться потребление памяти и снижаться
+производительность. Поэтому оптимизируем код метода getView,
+как показано в листниге~\ref{lst:adapter:update}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:adapter:update
+	]
+public View getView(int position, View convertView, ViewGroup parent) {
+	ViewHolder viewHolder;
+	if(convertView == null){
+		convertView = inflater.inflate(this.layout, parent, false);
+		viewHolder = new ViewHolder(convertView);
+		convertView.setTag(viewHolder);
+	} else {
+		viewHolder = (ViewHolder) convertView.getTag();
+	}
+	State state = states.get(position);
+	viewHolder.imageView.setImageResource(state.getFlagResource());
+	viewHolder.nameView.setText(state.getName());
+	viewHolder.capitalView.setText(state.getCapital());
+	return convertView;
+}
+\end{lstlisting}
+
+Параметр convertView указывает на элемент View, который используется для
+объекта в списке по позиции position. Если ранее уже создавался View для
+этого объекта, то параметр convertView уже содержит некоторое значение,
+которое мы можем использовать.\par
+В методе getView, если convertView равен null (то есть если ранее для
+объекта не создана разметка) создаем объект ViewHolder, который сохраняем
+в тег в convertView:
+
+\begin{verbatim}
+convertView.setTag(viewHolder);
+\end{verbatim}
+
+Если же разметка для объекта в ListView уже ранее была создана, то обратно
+получаем ViewHolder из тега:
+
+\begin{verbatim}
+viewHolder = (ViewHolder) convertView.getTag();
+\end{verbatim}
+
+Затем также для ImageView и TextView во ViewHolder устанавливаются
+значения из объекта State:
+
+\begin{verbatim}
+viewHolder.imageView.setImageResource(state.getFlagResource());
+viewHolder.nameView.setText(state.getName());
+viewHolder.capitalView.setText(state.getCapital());
+\end{verbatim}
+
+И теперь ListView особенно при больших списках будет работать плавнее и
+производительнее, чем в предыдущих материалах.
+
+\section{Сложный список с кнопками}
+Ранее были расмотрены кастомные адаптеры, которые позволяют выводить в
+списки сложные данные. Теперь пойдем дальше и рассмотрим, как мы можем
+добавить в списки другие элементы, например, кнопки, и обрабатывать их
+события.\par
+Для этого вначале определим класс Product, как показано
+в листниге~\ref{lst:model:product}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:model:product
+	]
+public class Product {
+	private String name;
+	private int count;
+	private String unit;
+
+	public Product(String name, String unit) {
+		this.name = name;
+		this.count = 0;
+		this.unit = unit;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getCount() {
+		return count;
+	}
+
+	public void setCount(int count) {
+		this.count = count;
+	}
+
+	public String getUnit() {
+		return unit;
+	}
+
+	public void setUnit(String unit) {
+		this.unit = unit;
+	}
+}
+\end{lstlisting}
+
+Данный класс хранит название, количество продукта, а также единицу
+измерения. И объекты этого классы будем выводить в список.\par
+Для этого в каталог res/layout добавим новый файл product\_list\_item.xml,
+как показано в листниге~\ref{lst:xml:product-item}.
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:product-item
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp" >
+    <TextView
+        android:id="@+id/nameView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        app:layout_constraintHorizontal_weight="2"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/countView"
+        app:layout_constraintTop_toTopOf="parent"/>
+    <TextView
+        android:id="@+id/countView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        app:layout_constraintHorizontal_weight="2"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/nameView"
+        app:layout_constraintRight_toLeftOf="@+id/addButton"
+        app:layout_constraintTop_toTopOf="parent" />
+    <Button
+        android:id="@+id/addButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="+"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/countView"
+        app:layout_constraintRight_toLeftOf="@+id/removeButton"
+        app:layout_constraintTop_toTopOf="parent" />
+    <Button
+        android:id="@+id/removeButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="-"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/addButton"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Здесь определены два текстовых поля для вывода названия и количества
+продукта и две кнопки для добавления и удаления однйо единицы продукта.\par
+Теперь добавим класс адаптера, который назовем ProductAdapter, по аналогии
+какой был создан в предыдущей главе.\par
+И немного изменим управляющее активити, как показано
+в листниге~\ref{lst:list:product}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:list:product
+	]
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_complex_list);
+	ArrayList<Product> products = new ArrayList<>();
+
+	if(products.size() == 0){
+		products.add(new Product("Patato", "kg."));
+		products.add(new Product("Tea", "item."));
+		products.add(new Product("Eage", "item."));
+		products.add(new Product("Milk", "l."));
+		products.add(new Product("Makaroni", "kg."));
+	}
+
+	ListView productList = findViewById(R.id.productList);
+	ProductAdapter adapter = new ProductAdapter(this
+		, R.layout.product_list_item
+		, products);
+	productList.setAdapter(adapter);
+}
+\end{lstlisting}
+
+\section{Spinner}
+Spinner представляет собой выпадающий список. Определим в файле
+разметки элемент Spinner, как показано
+в листниге~\ref{lst:xml:spinner}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:xml:spinner
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:padding="16dp">
+	<Spinner
+		android:id="@+id/spinner"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		app:layout_constraintLeft_toLeftOf="parent"
+		app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+В качестве источника данных, как и для ListView, для Spinner может служить
+простой список или массив, соданный программно, либо ресурс string-array.
+Взаимодействие с источником данных также будет идти через адаптер. В
+данном случае определим источник программно в виде массива в коде
+(рис. \ref{lst:java:spinner}).
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:spinner
+	]
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_spinner);
+
+	Spinner spinner = findViewById(R.id.spinner);
+	ArrayAdapter<String> adapter = new ArrayAdapter(this
+			, android.R.layout.simple_spinner_item
+			, getResources().getStringArray(R.array.jobs));
+
+	adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+	spinner.setAdapter(adapter);
+}
+\end{lstlisting}
+
+\section{Обработка выбора элемента в Spinner}
+Используя слушатель OnItemSelectedListener, в частности его метод
+\texttt{onItemSelected()}, мы можем обрабатывать выбор элемента из списка.\par
+Далее определим в активити для элемента Spinner слушатель
+OnItemSelectedListener (рис. \ref{lst:spinner:listner}).
+
+\begin{lstlisting}[language=Java
+	, label=lst:spinner:listner
+	]
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_spinner);
+
+	Spinner spinner = findViewById(R.id.spinner);
+	ArrayAdapter<String> adapter = new ArrayAdapter(this
+			, android.R.layout.simple_spinner_item
+			, getResources().getStringArray(R.array.jobs));
+
+	adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+	spinner.setAdapter(adapter);
+	TextView selection = findViewById(R.id.selection);
+	AdapterView.OnItemSelectedListener itemSelectedListener = new
+		AdapterView.OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parent
+				, View view
+				, int position
+				, long id) {
+				String item = (String)parent.getItemAtPosition(position);
+				selection.setText(item);
+			}
+			@Override
+			public void onNothingSelected(AdapterView<?> parent) {
+			}
+		};
+	spinner.setOnItemSelectedListener(itemSelectedListener);
+}
+\end{lstlisting}
+
+\section{Виджет автодополнения AutoCompleteTextView}
+AutoCompleteTextView представляет элемент, созданный на основе класса
+EditText и обладающий возможностью автодополнения.\par
+Во-первых, объявим в ресурсе разметке данный элемент, как показано
+в листниге~\ref{lst:xml:autocomplete}.
+
+\begin{lstlisting}[language=XML
+	, label=lst:xml:autocomplete
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:padding="16dp">
+	<AutoCompleteTextView
+		android:id="@+id/autocomplete"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:completionHint="Input citi"
+		android:completionThreshold="1"
+		app:layout_constraintLeft_toLeftOf="parent"
+		app:layout_constraintRight_toRightOf="parent"
+		app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Атрибут android:completionHint позволяет задать надпись, которая
+отображается внизу списка, а свойство android:completionThreshold
+устанавливает, какое количество символов надо ввести, чтобы начало
+работать автодополнение. То есть в данном случае уже после ввода одного
+символа должен появться список с подстановками.\par
+Как и в случае с элементами ListView и Spinner, AutoCompleteTextView
+подключается к источнику данных через адаптер. Источником данных опять
+же может служить массив или список объектов, либо ресурс string-array.\par
+Теперь подключим к виджету массив строк в классе активити
+(рис.~\ref{lst:java:autocomplete}).
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:autocomplete
+	]
+AutoCompleteTextView autoCompleteTextView = findViewById(R.id.autocomplete);
+ArrayAdapter<String> adapter = new ArrayAdapter(this
+		, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item
+		, cities);
+autoCompleteTextView.setAdapter(adapter);
+\end{lstlisting}
+
+\section{виджет MultiAutoCompleteTextView}
+Этот виджет дополняет функциональность элемента AutoCompleteTextView.
+MultiAutoCompleteTextView позволяет использовать автодополнения не
+только для одной строки, но и для отдельных слов. Например, если вводится
+слово и после него ставится запятая, то автозаполнение все равно будет
+работать для вновь вводимых слов после запятой или другого разделителя.\par
+Подключение к виджету массив строк показн в классе активити
+(рис.~\ref{lst:java:multyautocomplete}).
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:multyautocomplete
+	]
+MultiAutoCompleteTextView multiAutoCompleteTV = 
+		findViewById(R.id.multyautocomplete);
+ArrayAdapter<String> adapterM = new ArrayAdapter(this
+		, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item
+		, cities);
+multiAutoCompleteTextView.setAdapter(adapterM);
+multiAutoCompleteTextView.setTokenizer(
+	new MultiAutoCompleteTextView.CommaTokenizer()
+);
+\end{lstlisting}
+
+\section{GridView}
+Элемент GridView представляет отображение в виде таблицы - набора строк
+и столбцов.\par
+Основные атрибуты GridView:
+
+\begin{itemize}
+	\item \texttt{android:columnWidth}: устанавливает фиксированную ширину
+		столбцов;
+	\item \texttt{android:gravity}: устанавливает выравнивание содержимого
+		внутри каждой ячейки;
+	\item \texttt{android:horizontalSpacing}: устанавливает горизональные
+		отступы между столбцами;
+	\item \texttt{android:numColumns}: устанавливает количество столбцов;
+	\item \texttt{android:stretchMode}: устанавливает, как столбцы будут
+		растягиваться и занимать пространство контейнера.
+\end{itemize}
+
+Определение GridView в разметке проиллюстрирована
+в листниге~\ref{lst:xml:gridview}.
+\begin{lstlisting}[language=XML
+	, label=lst:xml:gridview
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+    <GridView
+        android:id="@+id/grid"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:numColumns="2"
+        android:verticalSpacing="16dp"
+        android:horizontalSpacing="16dp"
+        android:stretchMode="columnWidth"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+В данном случае указываем, что грид будет иметь 2 столбца, которые
+растягиваются равномерно по всей ширине грида, а между ячейками будут
+отступы по горизонтали и вертикали в 16 dp.\par
+Теперь, как и в случае с ListView, надо установить связь с адаптером в
+классе активит, как показано в листниге~\ref{lst:java:gridview}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:gridview
+	]
+String[] countries = { "Brasil", "Argantina", "Chili", "Columbia", "Urugvai"};
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_grid);
+
+	GridView countriesList = findViewById(R.id.grid);
+	ArrayAdapter<String> adapter = new ArrayAdapter(this
+			, android.R.layout.simple_list_item_1, countries);
+	countriesList.setAdapter(adapter);
+	AdapterView.OnItemClickListener itemListener =
+		new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent
+				, View view, int position, long id) {
+				Toast.makeText(getApplicationContext()
+						,"You selected "
+							+ parent.getItemAtPosition(position).toString()
+						, Toast.LENGTH_SHORT).show();
+			}
+	};
+	countriesList.setOnItemClickListener(itemListener);
+}
+\end{lstlisting}
+
+\section{RecyclerView}
+Элемент RecyclerView предназначен для оптимизации работы со списками и
+во многом позволяет повысить производительность по сравнению со
+стандартным ListView.\par
+Для представления данных будем использовать созданную ранее модель State.\par
+Как и в случае с ListView, для вывода сложных объектов в RecyclerView
+необходимо определить свой адаптер. Поэтому добавим новый класс Java,
+который назовем StateAdapterRec.
+Его код продемонстрирован в листниге~\ref{lst:adapter:recycler}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:adapter:recycler
+	]
+public class StateAdapterRec
+	extends RecyclerView.Adapter<StateAdapterRec.ViewHolder>{
+	private final LayoutInflater inflater;
+	private final List<State> states;
+
+	public StateAdapterRec(Context context, List<State> states) {
+		this.states = states;
+		this.inflater = LayoutInflater.from(context);
+	}
+
+	@Override
+	public StateAdapterRec.ViewHolder onCreateViewHolder(ViewGroup parent, int
+			viewType) {
+		View view = inflater.inflate(R.layout.state_list_item, parent, false);
+		return new ViewHolder(view);
+	}
+
+	@Override
+	public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+		State state = states.get(position);
+		holder.flagView.setImageResource(state.getFlagResource());
+		holder.nameView.setText(state.getName());
+		holder.capitalView.setText(state.getCapital()); }
+
+	@Override
+	public int getItemCount() {
+		return states.size();
+	}
+
+	public static class ViewHolder extends RecyclerView.ViewHolder {
+		final ImageView flagView;
+		final TextView nameView, capitalView;
+
+		ViewHolder(View view){
+			super(view);
+			flagView = view.findViewById(R.id.flag);
+			nameView = view.findViewById(R.id.name);
+			capitalView = view.findViewById(R.id.capital);
+		}
+	}
+}
+\end{lstlisting}
+
+В данном случае с помощью значения
+\texttt{androidx.recyclerview.widget.LinearLayoutManager} указываем, что
+элементы будут располагаться в виде простого списка. Обратите внимание,
+что класс LinearLayoutManager также расположен в библиотеке RecyclerView
+и поэтому при указании значения указывается полное название класса с
+именем его пакета.\par
+И в конце создадим активити с кодом, показанным
+в листниге~\ref{lst:java:recycler}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:recycler
+	]
+ArrayList<State> states = new ArrayList<>();
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_recycler);
+	setInitialData();
+	RecyclerView recyclerView = findViewById(R.id.list);
+	StateAdapterRec adapter = new StateAdapterRec(this , states);
+	recyclerView.setAdapter(adapter);
+}
+
+private void setInitialData() {
+	states.add(new State ("Mexico", "Mexico", R.drawable.mx));
+	states.add(new State ("Russia", "Russia", R.drawable.ru));
+	states.add(new State ("UK"
+		, "UK", R.drawable.uk));
+	states.add(new State ("Norvegia", "Norvegia", R.drawable.no));
+	states.add(new State ("German", "German", R.drawable.de));
+}
+\end{lstlisting}
+
+\section{обработку выбора элемента в RecyclerView}
+При работе с виджетом RecyclerView неизбежно встанет вопрос, а как
+обработать выбор элемента в RecyclerView. И тут надо заметить, что в
+отличие от других типов виджетов для работы со списками RecyclerView по
+умолчанию не предоставляет какого-то специального метода, с помощью
+которого можно было бы определить слушатель нажатия на элемент в
+списке. Поэтому всю инфраструктуру необходимо определять самому
+разработчику. Но, к счастью, в реальности все не так сложно.\par
+Перейдем к классу StateAdapter и определим его код, как
+показано в листниге~\ref{lst:adapter:recycler:select}.
+
+\begin{lstlisting}[language=Java
+	, label=lst:adapter:recycler:select
+	]
+public class StateAdapterRec extends RecyclerView.Adapter<StateAdapterRec.ViewHolder>{
+	private final LayoutInflater inflater;
+	private final List<State> states;
+
+	public interface OnStateClickListener {
+		void onStateClick(State state, int position);
+	}
+
+	private final OnStateClickListener onClickListener;
+
+	public StateAdapterRec(Context context, List<State> states
+			, OnStateClickListener onClickListener) {
+		this.onClickListener = onClickListener;
+		this.states = states;
+		this.inflater = LayoutInflater.from(context);
+	}
+
+	@Override
+	public StateAdapterRec.ViewHolder onCreateViewHolder(ViewGroup parent, int
+			viewType) {
+		View view = inflater.inflate(R.layout.state_list_item, parent, false);
+		return new ViewHolder(view);
+	}
+
+	@Override
+	public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+		State state = states.get(position);
+		holder.flagView.setImageResource(state.getFlagResource());
+		holder.nameView.setText(state.getName());
+		holder.capitalView.setText(state.getCapital());
+
+		holder.itemView.setOnClickListener((v) -> onClickListener.onStateClick(state, position));
+	}
+
+	@Override
+	public int getItemCount() {
+		return states.size();
+	}
+
+	public static class ViewHolder extends RecyclerView.ViewHolder {
+		final ImageView flagView;
+		final TextView nameView, capitalView;
+
+		ViewHolder(View view){
+			super(view);
+			flagView = view.findViewById(R.id.flag);
+			nameView = view.findViewById(R.id.name);
+			capitalView = view.findViewById(R.id.capital);
+		}
+	}
+}
+\end{lstlisting}
+
+И в конце изменим класс активит (рис. \ref{lst:java:recycler:select}).
+
+\begin{lstlisting}[language=Java
+	, label=lst:java:recycler:select
+	]
+ArrayList<State> states = new ArrayList<>();
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_recycler);
+	setInitialData();
+	RecyclerView recyclerView = findViewById(R.id.list);
+	StateAdapterRec.OnStateClickListener stateClickListener =
+		new StateAdapterRec.OnStateClickListener() {
+			@Override
+			public void onStateClick(State state, int position) {
+				Toast.makeText(getApplicationContext()
+					, "Was selected point " + state.getName()
+					, Toast.LENGTH_SHORT
+				).show();
+			}
+		};
+	StateAdapterRec adapter = new StateAdapterRec(this, states, stateClickListener);
+	recyclerView.setAdapter(adapter);
+}
+
+private void setInitialData() {
+	states.add(new State ("Mexico", "Mexico", R.drawable.mx));
+	states.add(new State ("Russia", "Russia", R.drawable.ru));
+	states.add(new State ("UK"
+		, "UK", R.drawable.uk));
+	states.add(new State ("Norvegia", "Norvegia", R.drawable.no));
+	states.add(new State ("German", "German", R.drawable.de));
+}
+\end{lstlisting}
+
+\clearpage
+
+\section*{\LARGE{Вывод}}
+\addcontentsline{toc}{section}{Вывод}
+В этой практической работе были получены знания об создании и управлении
+такими списками как:
+
+\begin{itemize}
+	\item ListView
+	\item Spinner
+	\item GridView
+	\item RecyclerView
+\end{itemize}
+
+Научились создавать адаптеры, для храниния данный в списках и управления
+нажатием на элемнт списка.\par
+Также познакомились с виджетами организующие автодополнение.
+
