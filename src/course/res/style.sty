@@ -1,0 +1,124 @@
+\ProvidesPackage{style}
+
+\usepackage{cmap} % for pdfLaTeX
+\usepackage[T1,T2A]{fontenc} % correct encoding for pdfLaTeX
+\usepackage[utf8]{inputenc} % correct encoding source file
+\usepackage[english,russian]{babel} % correct language
+
+
+\frenchspacing
+\pagestyle{plain}
+
+\usepackage[left=3cm, right=1.5cm, vmargin=2cm]{geometry}
+
+\linespread{1.3} % line spacing 1.5
+\usepackage{indentfirst} % indent first paragraph
+\setlength{\parindent}{1.25cm}
+\usepackage[usenames,dvipsnames]{color} % color name
+\sloppy
+
+
+\usepackage[labelsep=period]{caption}
+%\usepackage[tableposition=top]{caption}
+%\DeclareCaptionLabelFormat{gostfigure}{Рисунок #2}
+%\DeclareCaptionLabelFormat{gosttable}{Таблица #2}
+%\DeclareCaptionLabelSeparator{gost}{~---~}
+%\captionsetup{labelsep=gost}
+%\captionsetup[figure]{labelformat=gostfigure}
+%\captionsetup[table]{labelformat=gosttable}
+%\renewcommand{\thesubfigure}{\asbuk{subfigure}}
+
+
+% Customize chapters and sections
+
+\usepackage{titlesec}
+
+\titleformat
+	{\chapter}
+	[hang]
+    {\filcenter}
+    {\bfseries\thechapter}
+    %{\bfseries\MakeUppercase{\chaptertitlename} \thechapter}
+    {8pt}
+    {\bfseries}{}
+ 
+\titleformat{\section}
+    {\normalsize\bfseries}
+    {\thesection}
+    {1em}{}
+ 
+\titleformat{\subsection}
+    {\normalsize\bfseries}
+    {\thesubsection}
+    {1em}{}
+
+\titlespacing*{\chapter}{0pt}{-30pt}{8pt}
+\titlespacing*{\section}{\parindent}{*4}{*4}
+\titlespacing*{\subsection}{\parindent}{*4}{*4}
+
+
+\usepackage{hyperref}
+\hypersetup{
+    pdfborder = {0 0 0}
+}
+
+% for graphics
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{longtable}
+
+\usepackage{listings}
+\lstset{
+	basicstyle=\small,
+	frame=single,
+	captionpos=t,
+	tabsize=4,
+	columns=flexible,
+    keepspaces=true,
+	showspaces=flase,
+	showstringspaces=false,
+	showtabs=false
+}
+
+\usepackage{enumitem}
+%\makeatletter
+    %\AddEnumerateCounter{\asbuk}{\@asbuk}{м)}
+%\makeatother
+\setlist{nolistsep}
+%\setlist{nosep}
+\setlist[enumerate]{label*=\arabic*.}
+\setlist[description]{style=nextline}
+%\renewcommand{\labelitemi}{-}
+%\renewcommand{\labelenumi}{\asbuk{enumi})}
+%\renewcommand{\labelenumii}{\arabic{enumii})}
+
+\setcounter{tocdepth}{2} % задать глубину оглавления
+
+% for non-end-to-end numbering
+%\usepackage{chngcntr}
+%\counterwithin{figure}{section}
+%\counterwithin{table}{section}
+
+\clubpenalty=10000
+\widowpenalty=10000
+
+
+\providecommand{\No}{\textnumero}
+
+
+%\usepackage[square,numbers,sort&compress]{natbib}
+%\renewcommand{\bibnumfmt}[1]{#1.\hfill}
+%\renewcommand{\bibsection}{\chapter*{СПИСОК ЛИТЕРАТУРЫ}}
+%\setlength{\bibsep}{0pt}
+
+
+\newenvironment{image}{
+	\begin{figure}[h!tp]
+	\centering
+}{
+	\end{figure}
+}
+\newcommand{\includegrph}[1]{
+	\includegraphics[width=0.7\textwidth]{#1}
+}
+
