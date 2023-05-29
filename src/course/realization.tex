@@ -85,22 +85,14 @@ PRAUC - площадь под кривой точности и полноты.
 Результаты тестирования:
 
 1. Для тестового датасета были использованы только векторы коротких описаний
+\img{img1}{Только векторы коротких описаний}{1}
 
-\begin{image}
-	\includegrph{img1}
-	\caption{Только векторы коротких описаний}
-	\label{fig:test1}
-\end{image}
 
 \clearpage
 
 2. Для тестового датасета были использованы векторы коротких описаний и остальные данные о фильмах
 
-\begin{image}
-	\includegrph{img2}
-	\caption{Векторы коротких описаний и остальные данные о фильмах}
-	\label{fig:test2}
-\end{image}
+\img{img2}{Векторы коротких описаний и остальные данные о фильмах}{1}
 
 Из-за того что модель при обучении использует случайные изначальные веса, точность 1 варианта не всегда меньше чем
 во 2 варианте, но в среднем 2 вариант показывает лучшие результаты.
@@ -112,11 +104,9 @@ PRAUC - площадь под кривой точности и полноты.
 Для работы с API была использована библиотека FastAPI, поскольку она показывает хорошие результаты по скорости работы
 и имеет удобную документацию.
 
-\begin{image}
-	\includegrph{img3}
-	\caption{Интерактивная документация к API}
-	\label{fig:docsApi}
-\end{image}
+
+\img{img3}{Интерактивная документация к API}{0.9}
+
 
 Реализованные методы:
 
@@ -131,4 +121,186 @@ register - метод для регистрации пользователя, в
 find - метод для поиска продукта, возвращает список продуктов которые содержат в названии данную строчку.
 Входные данные - строка для поиска.
 
-rate -
+rate - метод оценки продукта, возвращает ошибку с кодом 404 если нужно залогиниться.
+Входные данные - id продукта и оценка.
+
+get\_film - метод для получения информации о фильме, возвращает информацию о фильме.
+Входные данные - id фильма.
+
+get\_recommendation - метод для получения рекомендаций, возвращает список рекомендованных фильмов.
+
+\subsection{Архитектура серверной части}
+
+Серверная часть состоит из 2 докер контейнеров, один для API, другой для базы данных.
+
+\img{img4}{Архитектура серверной части}{0.5}
+
+\clearpage
+
+\section{Реализация мобильного приложения}
+
+\subsection{Архитектура мобильного приложения}
+Мобильное приложение состоит из 3 экранов:
+\begin{itemize}
+    \item Экран авторизации;
+    \item Экран регистрации;
+    \item Главный экран приложения.
+\end{itemize}
+
+В свою очередь главный экран приложения состоит из 3 фрагментов и навигационного меню:
+\begin{itemize}
+    \item Экран поиска;
+    \item Экран рекомендаций;
+    \item Экран продукта.
+\end{itemize}
+
+\img{img5}{Навигационный граф}{0.5}
+
+\clearpage
+
+\subsection{API}
+
+Для работы с API была использована библиотека Retrofit, поскольку она показывает хорошие результаты по скорости работы
+и имеет удобную документацию.
+
+Был создан класс \texttt{RetrofitHelper} для работы с API. Это фабрика для создания объекта соединения с сервером.
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{RetrofitHelper}, label=lst:RetrofitHelper]
+object RetrofitHelper {
+
+    private const val BASE_URL = "http://172.31.128.1:8031/"
+    private val client: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(5, TimeUnit.MINUTES)
+        .readTimeout(5, TimeUnit.MINUTES)
+        .writeTimeout(5, TimeUnit.MINUTES)
+        .cookieJar(MyCookieJar())
+        .build()
+
+    fun getInstance(): Retrofit {
+
+
+        return  Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+}
+\end{lstlisting}
+
+Интерфейс \texttt{Api} содержит все методы для работы с API.
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Api}, label=lst:Api]
+interface Api {
+
+    @GET("register")
+    fun register(
+        @Query("log") login: String,
+        @Query("password") password: String,
+        ): Call<Map<String,Int>>
+
+    @GET("login")
+    fun login(
+        @Query("log") login: String,
+        @Query("password") password: String,
+    ): Call<Map<String,Int>>
+
+    @GET("find")
+    fun find(
+        @Query("line") line: String
+    ): Call<List<Film>>
+
+    @GET("get_film")
+    fun get_film(
+        @Query("prod_id") id: Int
+    ): Call<Film>
+
+    @POST("rate")
+    fun rate(
+        @Query("prod_id") id: Int,
+        @Query("user_rate") rate: Boolean,
+    ): Call<String>
+
+
+    @GET("get_recommendations")
+    fun get_recommendations(
+    ): Call<List<Film>>
+
+}
+\end{lstlisting}
+
+Пример использования API:
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Пример использования API}, label=lst:ApiExample]
+val api = RetrofitHelper.getInstance().create(Api::class.java)
+        val call = api.login(
+            login = textLogin.text.toString(),
+            password = textPassword.text.toString()
+        )
+
+        call.enqueue(object : Callback<Map<String, Int>> {
+            override fun onResponse(
+                call: Call<Map<String, Int>>,
+                response: Response<Map<String, Int>>
+            ) {
+                if (response.isSuccessful) {
+                    startActivity(intent)
+                }else{
+                    if (response.code() == 404)
+                        textError.text = "User not found"
+                }
+            }
+
+            override fun onFailure(call: Call<Map<String, Int>>, t: Throwable) {
+                println("Network Error :: " + t.localizedMessage);
+            }
+
+        })
+\end{lstlisting}
+
+\subsection{Регистрация}
+
+Для регистрации пользователя была создана активность \texttt{Register}.
+\img{img6}{Экран регистрации}{0.5}
+
+При нажатии на кнопку регистрации происходит проверка введенных данных, если они корректны, то происходит запрос к API.
+для регистрации пользователя.
+Если пользователь с таким логином уже существует, то выводится сообщение об ошибке.
+
+\subsection{Вход}
+
+Для входа пользователя была создана активность \texttt{Login}.
+
+\img{img7}{Экран входа}{0.5}
+
+При нажатии на кнопку входа происходит проверка введенных данных, если они корректны, то происходит запрос к API.
+Читается ответ от сервера, если пользователь с таким логином и паролем существует, то происходит переход на главный
+экран приложения.
+
+При нажатии на кнопку регистрации происходит переход на экран регистрации.
+
+\subsection{Главный экран приложения}
+
+Главный экран приложения состоит из 3 фрагментов и навигационного меню.
+
+\img{img8}{Главный экран приложения}{0.5}
+
+Тут пользователь может перейти на экран поиска, экран рекомендаций.
+
+\subsection{Экран поиска}
+
+Экран поиска состоит из поля ввода и кнопки поиска.
+При нажатии на кнопку поиска происходит запрос к API.
+Полученные данные отображаются в виде списка, каждое фото и название фильма являются кликабельными, при нажатии на них
+происходит переход на экран продукта.
+Фото загружаться с помощью ссылки через библиотеку Glide.
+
+\subsection{Экран рекомендаций}
+
+При нажатии на кнопку рекомендаций происходит запрос к API.
+Так как процесс рекомендаций происходит на сервере, то ответ от сервера может занимать некоторое время.
+Как только ответ получен, то он отображается на экране.
+
+Экран рекомендаций состоит из списка фильмов, каждое фото и название фильма являются кликабельными, при нажатии на них
+происходит переход на экран продукта.
+Фото загружаться с помощью ссылки через библиотеку Glide.
