@@ -1,0 +1,1953 @@
+
+\section*{\LARGE{Введение}}
+\addcontentsline{toc}{section}{Введение}
+
+\textbf{Задание}:
+\begin{itemize}
+	\item Обеспечить сохранение состояния приложения.
+	\item Реализовать в приложении создание и получение настроек, используя
+		SharedPreferences.
+	\item Реализовать приватные настройки.
+	\item Реализовать технологии PreferenceFragmentCompat
+	\item Реализовать чтение и сохранение файлов.
+	\item Реализовать размещение файлов во внешнем хранилище
+	\item Обеспечить работу с локальной СУБД SQlite. Реализовать
+		подключение к базе данных, используя СУБД SQLite, Реализовать
+		создание и открытие базы данных. Обеспечить получение данных из
+		баз данных
+	\item Для упрощения работы с базами данных SQLite в Android применить
+		класс SQLiteOpenHelper
+	\item Обеспечить взаимодействие по получению данных, используя класс
+		Cursor, который предлагает ряд методов для управления выборкой и
+		класс CursorAdapter, позволяющий адаптировать полученный с
+		помощью курсора набор к отображению в списковых элементах
+		наподобие ListView
+	\item Реализовать добавление, удаление и обновление данных в SQLite.
+		Применяйте ContentValues
+	\item Реализуйте использование существующей БД SQLite
+	\item Организуйте динамический поиск по базе данных SQLite
+	\item Реализовать работу с базой данных через модель. Все взаимодействие
+		с базой данных производится через реализацию паттерна репозиторий.
+\end{itemize}
+
+\clearpage
+
+\section*{\LARGE{Выполнение практической работы}}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+\section{Сохранение состояния приложения}
+В одной из предыдущих тем был рассмотрен жизненный цикл Activity в
+приложении на Android, где после создания Activity вызывался метод
+onRestoreInstanceState, который восстанавливал ее состояние, а перед
+завершением работы вызывался метод onSaveInstanceState, который
+сохранял состояние Actiity. Оба этих метода в качестве параметра
+принимают объект Bundle, который как раз и хранит состояние activity:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+protected void onRestoreInstanceState(Bundle saveInstanceState);
+protected void onSaveInstanceState(Bundle saveInstanceState);
+\end{lstlisting}
+
+В методе onSaveInstanceState() сохраняем состояние. Для этого вызываем у
+параметра Bundle метод putString(key, value), первый параметр которого -
+ключ, а второй --- значение сохраняемых данных. В данном случае мы
+сохраняем строку, поэтому вызываем метод putString().\par
+В методе onRestoreInstanceState происходит обратный процесс --- с помощью
+метода getString(key) по ключу получаем из сохраненного состояния строку
+по ключу.\par
+Для примера рассмотрим сохранение-получение более сложных данных.
+Например, объектов определенного класса. Пусть у нас есть класс User:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+public class User implements Serializable {
+	private long id;
+	private String name;
+	private int age;
+
+	public User(String name, int age){
+		this.name = name;
+		this.age = age;
+	}
+
+	User(long id, String name, int year){
+		this.id = id;
+		this.name = name;
+		this.age = year;
+	}
+	public long getId() {
+		return id;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public int getAge() {
+		return age;
+	}
+	public void setAge(int age) {
+		this.age = age;
+	}
+
+	@Override
+	public String toString() {
+		return name + " : " + age;
+	}
+}
+\end{lstlisting}
+
+Класс User реализует интерфейс Serializable, поэтому мы можем сохранить
+его объекты с помощью метода putSerializable(), а получить с помощью
+метода getSerializable().\par
+Пусть у нас будет следующий интерфейс в размеку:
+
+\begin{lstlisting}[language=XML
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    <EditText
+        android:id="@+id/nameBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Введите имя"
+        app:layout_constraintBottom_toTopOf="@id/yearBox"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <EditText
+        android:id="@+id/yearBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Введите возраст"
+        android:inputType="numberDecimal"
+        app:layout_constraintBottom_toTopOf="@id/saveButton"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <Button
+        android:id="@+id/saveButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Сохранить"
+        android:onClick="saveData"
+        app:layout_constraintBottom_toTopOf="@id/dataView"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/yearBox"/>
+    <TextView
+        android:id="@+id/dataView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@id/getButton"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/saveButton"/>
+    <Button
+        android:id="@+id/getButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Получить данные"
+        android:onClick="getData"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dataView"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Здесь определены два поля ввода для имени и возраста соответственно.
+В классе MainActivity пропишем логику сохранения и получения данных:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+User user = new User("undefined", 0);
+final static String userVariableKey = "USER_VARIABLE";
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_save_state);
+}
+
+// сохранение состояния
+@Override
+protected void onSaveInstanceState(Bundle outState) {
+	outState.putSerializable(userVariableKey, user);
+	super.onSaveInstanceState(outState);
+}
+
+// получение ранее сохраненного состояния
+@Override
+protected void onRestoreInstanceState(Bundle savedInstanceState) {
+	super.onRestoreInstanceState(savedInstanceState);
+	// получаем объект User в переменную
+	user = (User)savedInstanceState.getSerializable(userVariableKey);
+	TextView dataView = findViewById(R.id.dataView);
+	dataView.setText("Name: " + user.getName() + " Age: " + user.getAge());
+}
+
+public void saveData(View view) {
+	// получаем введенные данные
+	EditText nameBox = findViewById(R.id.nameBox);
+	EditText yearBox = findViewById(R.id.yearBox);
+	String name = nameBox.getText().toString();
+	int age = 0; // значение по умолчанию, если пользователь ввел некорректные данные
+	try{
+		age = Integer.parseInt(yearBox.getText().toString());
+	}
+	catch (NumberFormatException ex){}
+	user = new User(name, age);
+}
+
+public void getData(View view) {
+	// получаем сохраненные данные
+	TextView dataView = findViewById(R.id.dataView);
+	dataView.setText("Name: " + user.getName() + " Age: " + user.getAge());
+}
+\end{lstlisting}
+
+Здесь также сохраняем данные в переменную User, которая предварительно
+инициализированна некоторыми данными по умолчанию. А при нажатии на
+кнопку получения получем данные из переменной и передаем их для вывода
+в текстовое поле.
+
+\section{Создание и получение настроек. SharedPreferences}
+Нередко приложению требуется сохранять небольшие кусочки данных для
+дальнейшего использования, например, данные о пользователе, настройки
+конфигурации и т.д. Для этого в Android существует концепция Preferences
+или настройки. Настройки представляют собой группу пар ключ-значение,
+которые используются приложением.\par
+В качестве значений могут выступать данные следующих типов: Boolean,
+Float, Integer, Long, String, набор строк.\par
+Настройки могут быть общими для всех activity в приложении, но также
+могут быть и настройки непосредственно для отдельных activity.\par
+Настройки хранятся в xml-файлах в незашифрованном виде в локальном
+хранилище. Они невидимы, поэтому для простого пользователя недоступны.\par
+При работе с настройками следует учитывать следующие моменты. Так как
+они хранятся в незашифрованном виде, то не рекомендуется сохранять в них
+чувствительные данные типа пароля или номеров кредитных карт. Кроме
+того, они представляют данные, ассоцииованные с приложением, и через
+панель управления приложением в Настройках ОС пользователь может
+удалить эти данные.\par
+Для работы с разделяемыми настройками в классе Activity (точнее в его
+базовом классе Context) имеется метод getSharedPreferences().\par
+Первый параметр метода указывает на название настроек. В данном случае
+название --- "PreferencesName". Если настроек с подобным названием нет, то
+они создаются при вызове данного метода. Второй параметр указывает на
+режим доступа. В данном случае режим описан константой MODE\_PRIVATE.\par
+Для управления настройками используется объект класса
+SharedPreferences.Editor, возвращаемый метод edit().\par
+Рассмотрим пример сохранения и получения настроек в приложении.
+Определим в файле размеку следующий пользовательский
+интерфейс:
+
+\begin{lstlisting}[language=XML
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    <EditText
+        android:id="@+id/nameBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Введите имя"
+        app:layout_constraintBottom_toTopOf="@id/saveButton"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <Button
+        android:id="@+id/saveButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Сохранить"
+        android:onClick="saveName"
+        app:layout_constraintBottom_toTopOf="@id/nameView"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/nameBox"/>
+    <TextView
+        android:id="@+id/nameView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@id/getButton"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/saveButton"/>
+    <Button
+        android:id="@+id/getButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Получить имя"
+        android:onClick="getName"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/nameView"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+На экране будут две кнопки --- для сохранения и для вывода ранее
+сохраненного значения, а также поле для ввода и текстовое поля ля вывода
+сохраненной настройки.\par
+Определим методы обработчики кнопок в классе MainActivity:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+private static final String PREFS_FILE = "Account";
+private static final String PREF_NAME = "Name";
+EditText nameBox;
+SharedPreferences settings;
+SharedPreferences.Editor prefEditor;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_shared_preferences);
+
+	nameBox = findViewById(R.id.nameBox);
+	settings = getSharedPreferences(PREFS_FILE, MODE_PRIVATE);
+//		SharedPreferences settings = getPreferences(MODE_PRIVATE);
+	// получаем настройки
+	String name = settings.getString(PREF_NAME,"");
+	nameBox.setText(name);
+}
+
+public void saveName(View view) {
+	// получаем введенное имя
+	EditText nameBox = findViewById(R.id.nameBox);
+	String name = nameBox.getText().toString();
+	// сохраняем его в настройках
+	SharedPreferences.Editor prefEditor = settings.edit();
+	prefEditor.putString(PREF_NAME, name);
+	prefEditor.apply();
+}
+
+public void getName(View view) {
+	// получаем сохраненное имя
+	TextView nameView = findViewById(R.id.nameView);
+	String name = settings.getString(PREF_NAME,"не определено");
+	nameView.setText(name);
+}
+
+@Override
+protected void onPause(){
+	super.onPause();
+	String name = nameBox.getText().toString();
+	// сохраняем в настройках
+	prefEditor = settings.edit();
+	prefEditor.putString(PREF_NAME, name);
+	prefEditor.apply();
+}
+\end{lstlisting}
+
+При отсутствии настроек при попытке их получить, приложение выведет
+значение по умолчанию.
+
+\subsection{Приватные настройки}
+Кроме общих настроек каждая activity может использовать приватные, к
+которым доступ из других activity будет невозможен. Для получения
+настроек уровня activity используется метод
+getPreferences(MODE\_PRIVATE):
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+import android.content.SharedPreferences;
+
+//........................
+
+SharedPreferences settings = getPreferences(MODE_PRIVATE);
+\end{lstlisting}
+
+То есть в отличие от общих настроек здесь не используется название группы
+настроек в качестве первого параметра, как в методе getSharedPreferences().
+Однако вся остальная работа по добавлению, получению и изменению
+настроек будет аналогична работает с общими настройками.
+
+\section{PreferenceFragmentCompat}
+Для упрощения работы с группой настроек Android предоставляет
+специальный тип фрагмента --- PreferenceFragmentCompat. Рассмотрим, как ее
+использовать.\par
+Создадим новый проект и вначале определим в файле build.gradle нужные
+зависимости для работы с PreferenceFragmentCompat:
+
+\begin{verbatim}
+implementation "androidx.fragment:fragment:1.3.6"
+implementation "androidx.preference:preference:1.1.1"
+\end{verbatim}
+
+Затем в папку res/xml добавим новый файл, который назовем settings.xml. И
+изменим его следующим образом:
+
+\begin{lstlisting}[language=XML
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:key="login"
+        android:summary="Введите логин"
+        android:title="Логин" />
+    <CheckBoxPreference
+        android:key="enabled"
+        android:summary="Отображать логин"
+        android:title="Отображать" />
+</PreferenceScreen>
+\end{lstlisting}
+
+Здесь в корневом элементе PreferenceScreen устанавливаются элементы
+EditTextPreference и CheckBoxPreference. Через каждый из этих элементов
+мы можем взаимодействовать с определенной настройкой.\par
+Далее добавим новый класс Java, который назовем SettingsFragment:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+public class SettingsFragment extends PreferenceFragmentCompat {
+	@Override
+	public void onCreatePreferences(Bundle savedInstanceState
+		, String rootKey) {
+		addPreferencesFromResource(R.xml.settings);
+	}
+}
+\end{lstlisting}
+
+Фрагмент SettingsFragment наследуется от класса
+PreferenceFragmentCompat. В его методе onCreatePreferences вызывается
+метод addPreferencesFromResource(), в который передается id ресурса xml с
+настройками (в данном случае ранее определенный ресурс R.xml.settings).
+И теперь добавим в проект специальную activity для установки настроек.
+Назовем ее SettingsActivity.\par
+В файле layout для SettingsActivity --- activity\_settings.xml пропишем
+следующий интерфейс:
+
+\begin{lstlisting}[language=XML
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.fragment.app.FragmentContainerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settings_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+</androidx.fragment.app.FragmentContainerView>
+\end{lstlisting}
+
+Здесь определен FragmentContainerView с id = settings\_container~---
+именно тот элемент, в который будет загружаться
+фрагмент SettingsFragment.\par
+В коде SettingsActivity определим загррузку фрагмента:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_settings);
+
+	getSupportFragmentManager()
+			.beginTransaction()
+			.replace(R.id.settings_container, new SettingsFragment())
+			.commit();
+}
+\end{lstlisting}
+
+SettingsActivity в качестве разметки интерфейса будет использовать ресурс
+R.layout.activity\_settings.
+При запуске SettingsActivity будет загружать фрагмент SettingsFragment в
+элемент с id settings\_container.
+Далее перейдем к главной activity. В файле размеку
+определим текстовое поле и кнопку:
+
+\begin{lstlisting}[language=XML
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    <TextView
+        android:id="@+id/settingsText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@id/settingsButton"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <Button
+        android:id="@+id/settingsButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Настройки"
+        android:onClick="setPrefs"
+        app:layout_constraintTop_toBottomOf="@id/settingsText"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+И изменим класс MainActivity:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+TextView settingsText;
+boolean enabled;
+String login;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_preference_fragment_compat);
+	settingsText = findViewById(R.id.settingsText);
+}
+
+@Override
+public void onResume() {
+	super.onResume();
+	SharedPreferences prefs =
+			PreferenceManager.getDefaultSharedPreferences(this);
+	enabled = prefs.getBoolean("enabled", false);
+	login = prefs.getString("login", "не установлено");
+	settingsText.setText(login);
+	if (enabled)
+		settingsText.setVisibility(View.VISIBLE);
+	else
+		settingsText.setVisibility(View.INVISIBLE);
+}
+
+public void setPrefs(View view){
+	Intent intent = new Intent(this, SettingsActivity.class);
+	startActivity(intent);
+}
+\end{lstlisting}
+
+В методе onResume() получаем все настройки. Если настройка enabled равно
+true, то отображаем текстовое поле с логином.\par
+В методе setPrefs(), который срабатывает при нажатии на кнопку,
+выполняется переход к SettingsActivity.\par
+При первом запуске настроек не будет, и логин не будет отображаться.
+Перейдем на страницу настроек и установим там логин и включим его
+отображение, а затем вернемся на главную activity.
+
+\section{Работа с файловой системой}
+\subsection{Чтение и сохранение файлов}
+Работа с настройками уровня activity и приложения позволяет сохранить
+небольшие данные отдельных типов (string, int), но для работы с большими
+массивами данных, такими как графически файлы, файлы мультимедиа и
+т.д., нам придется обращаться к файловой системе.\par
+ОС Android построена на основе Linux. Этот факт находит свое отражение в
+работе с файлами. Так, в путях к файлам в качестве разграничителя в Linux
+использует слеш "/". А все названия файлов и каталогов являются
+регистрозависимыми, то есть "data" это не то же самое, что и "Data".\par
+Приложение Android сохраняет свои данные в каталоге
+/data/data/<название\_пакета>/ и, как правило, относительно этого каталога
+будет идти работа.\par
+Для работы с файлами абстрактный класс android.content.Context определяет
+ряд методов.\par
+Все файлы, которые создаются и редактируются в приложении, как правило,
+хранятся в подкаталоге /files в каталоге приложения.\par
+Для непосредственного чтения и записи файлов применяются также
+стандартные классы Java из пакета java.io.\par
+Итак, применим функционал чтения-записи файлов в приложении. Пусть у
+нас будет следующая примитивная разметка layout:
+
+\begin{lstlisting}[language=XML
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <EditText
+        android:id="@+id/editor"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:textSize="18sp"
+        android:gravity="start"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/save_text"
+        app:layout_constraintTop_toTopOf="parent" />
+    <Button
+        android:id="@+id/save_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="saveText"
+        android:text="Сохранить"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/text"
+        app:layout_constraintTop_toBottomOf="@id/editor" />
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="start"
+        android:textSize="18sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/open_text"
+        app:layout_constraintTop_toBottomOf="@+id/save_text" />
+    <Button
+        android:id="@+id/open_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="openText"
+        android:text="Открыть"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Поле EditText предназначено для ввода текста, а TextView - для вывода ранее
+сохраненного текста. Для сохранения и восстановления текста добавлены две
+кнопки.\par
+Теперь в коде Activity пропишем обработчики кнопок с сохранением и
+чтением файла:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+private final static String FILE_NAME = "content.txt";
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_read_and_save_file);
+}
+
+// сохранение файла
+public void saveText(View view){
+	FileOutputStream fos = null;
+	try {
+		EditText textBox = findViewById(R.id.editor);
+		String text = textBox.getText().toString();
+		fos = openFileOutput(FILE_NAME, MODE_PRIVATE);
+		fos.write(text.getBytes());
+		Toast.makeText(this, "Файл сохранен"
+				, Toast.LENGTH_SHORT).show();
+	} catch(IOException ex) {
+		Toast.makeText(this, ex.getMessage()
+				, Toast.LENGTH_SHORT).show();
+	} finally {
+		try {
+			if(fos!=null)
+				fos.close();
+		} catch(IOException ex) {
+			Toast.makeText(this, ex.getMessage(),
+					Toast.LENGTH_SHORT).show();
+		}
+	}
+}
+
+// открытие файла
+public void openText(View view){
+	FileInputStream fin = null;
+	TextView textView = findViewById(R.id.text);
+	try {
+		fin = openFileInput(FILE_NAME);
+		byte[] bytes = new byte[fin.available()];
+		fin.read(bytes);
+		String text = new String(bytes);
+		textView.setText(text);
+	} catch(IOException ex) {
+		Toast.makeText(this, ex.getMessage()
+				, Toast.LENGTH_SHORT).show();
+	} finally {
+		try {
+			if(fin!=null)
+				fin.close();
+		} catch(IOException ex) {
+			Toast.makeText(this, ex.getMessage(),
+					Toast.LENGTH_SHORT).show();
+		}
+	}
+}
+\end{lstlisting}
+
+При нажатии на кнопку сохранения будет создаваться поток вывода:
+FileOutputStream fos = openFileOutput(FILE\_NAME, MODE\_PRIVATE).\par
+В данном случае введенный текст будет сохраняться в файл "content.txt". При
+этом будет использоваться режим MODE\_PRIVATE.\par
+Система позволяет создавать файлы с двумя разными режимами:
+
+\begin{itemize}
+	\item \texttt{MODE\_PRIVATE}: файлы могут быть доступны только владельцу
+		приложения (режим по умолчанию);
+	\item \texttt{MODE\_APPEND}: данные могут быть добавлены в конец файла.
+\end{itemize}
+
+И в папке \verb|data/data/[название_пакета_приложения]/files| мы сможем найти
+сохраненный файл.
+
+\subsection{Размещение файлов во внешнем хранилище}
+В прошлом материале мы рассмотрели сохранение и чтение файлов из
+каталога приложения. По умолчанию такие файлы доступны только самому
+приложения. Однако мы можем помещать и работать с файлами из внешнего
+хранилища приложения. Это также позволит другим программам открывать
+данные файлы и при необходимости изменять.\par
+Весь механизм работы с файлами будет таким же, как и при работе с
+хранилищем приложения. Ключевым отличием здесь будет получение и
+использование пути к внешнему хранилищу через метод
+getExternalFilesDir() класса Context.\par
+Итак, пусть в файле размеку будет такая же разметка интерфейса:
+
+\begin{lstlisting}[language=XML
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <EditText
+        android:id="@+id/editor"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:textSize="18sp"
+        android:gravity="start"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/save_text"
+        app:layout_constraintTop_toTopOf="parent" />
+    <Button
+        android:id="@+id/save_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="saveText"
+        android:text="Сохранить"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/text"
+        app:layout_constraintTop_toBottomOf="@id/editor" />
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="start"
+        android:textSize="18sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/open_text"
+        app:layout_constraintTop_toBottomOf="@+id/save_text" />
+    <Button
+        android:id="@+id/open_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="openText"
+        android:text="Открыть"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+А код класса MainActivity будет выглядеть следующим образом:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+private final static String FILE_NAME = "document.txt";
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_external_storage);
+}
+
+private File getExternalPath() {
+	return new File(getExternalFilesDir(null), FILE_NAME);
+}
+
+// сохранение файла
+public void saveText(View view){
+	try(FileOutputStream fos = new FileOutputStream(getExternalPath())) {
+		EditText textBox = findViewById(R.id.editor);
+		String text = textBox.getText().toString();
+		fos.write(text.getBytes());
+		Toast.makeText(this, "Файл сохранен", Toast.LENGTH_SHORT).show();
+	} catch(IOException ex) {
+		Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
+	}
+}
+
+// открытие файла
+public void openText(View view){
+	TextView textView = findViewById(R.id.text);
+	File file = getExternalPath();
+	// если файл не существует, выход из метода
+	if(!file.exists()) return;
+	try(FileInputStream fin = new FileInputStream(file)) {
+		byte[] bytes = new byte[fin.available()];
+		fin.read(bytes);
+		String text = new String (bytes);
+		textView.setText(text);
+	} catch(IOException ex) {
+		Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
+	}
+}
+\end{lstlisting}
+
+С помощью выражения getExternalFilesDir(null) получаем доступ к папке
+приложения во внешнем хранилище и устанавливаем объект файла.\par
+В качестве параметра передается тип папки, но в данном случае он нам не
+важен, поэтому передается значение null.\par
+Все остальные действия по записи/чтению файла будут такими же, как и в
+предыдущей теме в случае с работой с локальной папкой файла.\par
+И после операции записи на смартфоне через Device File Explorer мы сможем
+увидеть созданный файл в папке
+\verb|storage/self/primary/Android/data/[название_пакета]/files|.\par
+
+\section{Работа с базами данных SQLite}
+\subsection{Подключение к базе данных SQLite}
+В Android имеется встроенная поддержка одной из распространенных систем
+управления базами данных --- SQLite. Для этого в пакете android.database.sqlite
+определен набор классов, которые позволяют работать с базами данных
+SQLite. И каждое приложение может создать свою базу данных.\par
+Чтобы использовать SQLite в Android, надо создать базу данных с помощью
+выражение на языке SQL. После этого база данных будет храниться в
+каталоге приложения по пути:
+\verb|DATA/data/[Название_приложения]/databases/[Название_файла_базы_данных]|
+
+ОС Android по умолчанию уже содержит ряд встроенных баз SQLite, которые
+используются стандартными программами - для списка контактов, для
+хранения фотографий с камеры, музыкальных альбомов и т.д.\par
+Основную функциональность по работе с базами данных предоставляет
+пакет android.database. Функциональность непосредственно для работы с
+SQLite находится в пакете android.database.sqlite.\par
+База данных в SQLite представлена классом
+android.database.sqlite.SQLiteDatabase. Он позволяет выполнять запросы к
+бд, выполнять с ней различные манипуляции.\par
+Класс android.database.sqlite.SQLiteCursor предоставляет запрос и
+позволяет возвращать набор строк, которые соответствуют этому запросу.\par
+Класс android.database.sqlite.SQLiteQueryBuilder позволяет
+создавать SQLзапросы.\par
+Сами sql-выражения представлены классом
+android.database.sqlite.SQLiteStatement, которые позволяют с помощью
+плейсхолдеров вставлять в выражения динамические данные.
+Класс android.database.sqlite.SQLiteOpenHelper позволяет создать базу
+данных со всеми таблицами, если их еще не существует.\par
+В SQLite применяется следующая система типов данных:
+
+\begin{itemize}
+	\item INTEGER: представляет целое число, аналог типу int в java
+	\item REAL: представляет число с плавающей точкой, аналог float и
+		double в java
+	\item TEXT: представляет набор символов, аналог String и char в java
+	\item BLOB: представляет массив бинарных данных, например,
+		изображение, аналог типу int в java
+\end{itemize}
+
+Сохраняемые данные должны представлять соответствующие типы в java.
+
+\subsection{Создание и открытие базы данных}
+Для создания или открытия новой базы данных из кода Activity в Android мы
+можем вызвать метод openOrCreateDatabase(). Этот метод может
+принимать три параметра:
+
+\begin{itemize}
+	\item название для базы данных
+	\item числовое значение, которое определяет режим работы (как правило,
+		в виде константы MODE\_PRIVATE)
+	\item необязательный параметр в виде объекта
+		SQLiteDatabase.CursorFactory, который представляет фабрику
+		создания курсора для работы с бд
+\end{itemize}
+
+Метод db.rawQuery() возвращает объект Cursor, с помощью которого мы
+можем извлечь полученные данные.\par
+Возможна ситуация, когда в базе данных не будет объектов, и для этого
+методом query.moveToFirst() пытаемся переместиться к первому объекту,
+полученному из бд. Если этот метод возвратит значение false, значит запрос
+не получил никаких данных из бд.\par
+В файле размеку определим простейший графический интерфейс:
+
+\begin{lstlisting}[language=XML
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp" >
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Click"
+        android:onClick="onClick"
+        app:layout_constraintBottom_toTopOf="@id/textView"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="22sp"
+        app:layout_constraintTop_toBottomOf="@id/button"
+        app:layout_constraintLeft_toLeftOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+А в классе MainActivity определим взаимодействие с базой данных:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+public void onClick(View view){
+	SQLiteDatabase db = getBaseContext().openOrCreateDatabase("app.db",
+			MODE_PRIVATE, null);
+	db.execSQL("CREATE TABLE IF NOT EXISTS users (name TEXT
+		, age INTEGER
+		, UNIQUE(name))");
+	db.execSQL("INSERT OR IGNORE INTO users VALUES ('Tom Smith', 23)
+		, ('John Dow', 31);");
+	Cursor query = db.rawQuery("SELECT * FROM users;", null);
+	TextView textView = findViewById(R.id.textView);
+	textView.setText("");
+	while(query.moveToNext()){
+		String name = query.getString(0);
+		int age = query.getInt(1);
+		textView.append("Name: " + name + " Age: " + age + "\n");
+	}
+	query.close();
+	db.close();
+}
+\end{lstlisting}
+
+По нажатию на кнопку здесь вначале создается в базе данных app.db новая
+таблица users, а затем в нее добавляются два объекта в базу данных с
+помощью SQL-выражения INSERT.\par
+Далее с помощью выражения SELECT получаем всех добавленных
+пользователей из базы данных в виде курсора Cursor.
+Вызовом query.moveToNext() перемещаемся в цикле while последовательно
+по всем объектам.\par
+Для получения данных из курсора применяются методы query.getString(0) и
+query.getInt(1). В скобках в методы передается номер столбца, из которого
+мы получаем данные. Например, выше мы добавили вначале имя
+пользователя в виде строки, а затем возраст в виде числа. Значит, нулевым
+столбцом будет идти строкое значение, которое получаем с помощью метода
+getString(), а следующим - первым столбцом идет числовое значение, для
+которого применяется метод getInt().
+
+\subsection{SQLiteOpenHelper и SimpleCursorAdapter}
+\subsubsection{Получение данных из SQLite}
+В прошлом материале было рассмотрено, как подключаться к базе данных
+SQLite и выполнять запросы. Теперь пойдем дальше и создадим полностью
+интерфейс для работы с базой данных.\par
+Для упрощения работы с базами данных SQLite в Android нередко
+применяется класс SQLiteOpenHelper. Для использования необходимо
+создать класса-наследник от SQLiteOpenHelper, переопределив как минимум
+два его метода:
+
+\begin{itemize}
+	\item onCreate(): вызывается при попытке доступа к базе данных, но когда
+		еще эта база данных не создана
+	\item onUpgrade(): вызывается, когда необходимо обновление схемы базы
+		данных. Здесь можно пересоздать ранее созданную базу данных в
+		onCreate(), установив соответствующие правила преобразования от
+		старой бд к новой
+\end{itemize}
+
+Добавим класс SQLiteOpenHelper в Android и Java:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+public class DatabaseHelper extends SQLiteOpenHelper {
+	private static final String DATABASE_NAME = "userstore.db"; // название бд
+	private static final int SCHEMA = 1; // версия базы данных
+	static final String TABLE = "users"; // название таблицы в бд названия столбцов
+	public static final String COLUMN_ID = "_id";
+	public static final String COLUMN_NAME = "name";
+	public static final String COLUMN_YEAR = "year";
+
+	public DatabaseHelper(Context context) {
+		super(context, DATABASE_NAME, null, SCHEMA);
+	}
+
+	@Override
+	public void onCreate(SQLiteDatabase db) {
+		db.execSQL("CREATE TABLE users ("
+				+ COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+				+ COLUMN_NAME + " TEXT, "
+				+ COLUMN_YEAR + " INTEGER);");
+		// добавление начальных данных
+		db.execSQL("INSERT INTO "+ TABLE
+				+" (" + COLUMN_NAME
+				+ ", " + COLUMN_YEAR
+				+ ") VALUES ('Том Смит', 1981);");
+	}
+
+	@Override
+	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+		db.execSQL("DROP TABLE IF EXISTS "+TABLE);
+		onCreate(db);
+	}
+}
+\end{lstlisting}
+
+Если база данных отсутствует или ее версия (которая задается в переменной
+SCHEMA) выше текущей, то срабатывает метод onCreate().\par
+Для выполнения запросов к базе данных нам потребуется объект
+SQLiteDatabase, который представляет базу данных. Метод onCreate()
+получает в качестве параметра базу данных приложения.\par
+В методе onUpgrade() происходит обновление схемы БД. В данном случае
+для примера использован примитивный поход с удалением предыдущей базы
+данных с помощью sql-выражения DROP и последующим ее созданием. Но в
+реальности если вам будет необходимо сохранить данные, этот метод может
+включать более сложную логику - добавления новых столбцов, удаление
+ненужных, добавление дополнительных данных и т.д.\par
+Далее определим в файле размеку следующую разметку:
+
+\begin{lstlisting}[language=XML
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <Button
+        android:id="@+id/addButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:text="Добавить"
+        android:onClick="add"
+        app:layout_constraintBottom_toTopOf="@+id/list"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+    <ListView
+        android:id="@+id/list"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@+id/addButton"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Здесь определен список ListView, для отображения полученных данных, с
+заголовком, который будет выводить число полученных объектов.\par
+И изменим код класса MainActivity следующим образом:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+ListView userList;
+DatabaseHelper databaseHelper;
+SQLiteDatabase db;
+Cursor userCursor;
+SimpleCursorAdapter userAdapter;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_sqlite_open_helper);
+	userList = findViewById(R.id.list);
+	userList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position,
+								long id) {
+			Intent intent = new Intent(getApplicationContext(), UserActivity.class);
+			intent.putExtra("id", id);
+			startActivity(intent);
+		}
+	});
+	databaseHelper = new DatabaseHelper(getApplicationContext());
+}
+
+@Override
+public void onResume() {
+	super.onResume();
+	// открываем подключение
+	db = databaseHelper.getReadableDatabase();
+	//получаем данные из бд в виде курсора
+	userCursor = db.rawQuery("select * from " + DatabaseHelper.TABLE, null);
+	// определяем, какие столбцы из курсора будут выводиться в ListView
+	String[] headers = new String[]{DatabaseHelper.COLUMN_NAME,
+			DatabaseHelper.COLUMN_YEAR};
+	// создаем адаптер, передаем в него курсор
+	userAdapter = new SimpleCursorAdapter(this,
+			android.R.layout.two_line_list_item,
+			userCursor, headers, new int[]{android.R.id.text1, android.R.id.text2},
+			0);
+	userList.setAdapter(userAdapter);
+}
+// по нажатию на кнопку запускаем UserActivity для добавления данных
+public void add(View view) {
+	Intent intent = new Intent(this, UserActivity.class);
+	startActivity(intent);
+}
+
+@Override
+public void onDestroy(){
+	super.onDestroy();
+	// Закрываем подключение и курсор
+	db.close();
+	userCursor.close();
+}
+\end{lstlisting}
+
+\subsection{Получение данных и Cursor}
+Android предоставляет различные способы для осуществления запросов к
+объекту SQLiteDatabase. В большинстве случаев мы можем применять метод
+rawQuery(), который принимает два параметра: SQL-выражение SELECT и
+дополнительный параметр, задающий параметры запроса.
+После выполнения запроса rawQuery() возвращает объект Cursor, который
+хранит результат выполнения SQL-запроса:
+
+\begin{verbatim}
+userCursor = db.rawQuery("select * from "+ DatabaseHelper.TABLE, null);
+\end{verbatim}
+
+Класс Cursor предлагает ряд методов для управления выборкой, в частности:
+\begin{itemize}
+	\item getCount(): получает количество извлеченных из базы данных
+		объектов
+	\item Методы moveToFirst() и moveToNext() позволяют переходить к
+		первому и к следующему элементам выборки. Метод isAfterLast()
+		позволяет проверить, достигнут ли конец выборки.
+	\item Методы get*(columnIndex) (например, getLong(), getString())
+		позволяют по индексу столбца обратиться к данному столбцу
+		текущей строки
+\end{itemize}
+
+Дополнительно для управления курсором в Android имеется класс
+CursorAdapter. Он позволяет адаптировать полученный с помощью курсора
+набор к отображению в списковых элементах наподобие ListView. Как
+правило, при работе с курсором используется подкласс CursorAdapter -
+SimpleCursorAdapter. Хотя можно использовать и другие адаптеры, типа
+ArrayAdapter.
+
+\subsection{Добавление, удаление и обновление данных в SQLite}
+Продолжим работу с проектом из прошлой темы, где мы получаем данные.
+Теперь добавим в него стандартную CRUD-логику (создание, обновление,
+удаление).\par
+Создадим класс UserActivity:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+EditText nameBox;
+EditText yearBox;
+Button delButton;
+Button saveButton;
+DatabaseHelper sqlHelper;
+SQLiteDatabase db;
+Cursor userCursor;
+long userId=0;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_user);
+	nameBox = findViewById(R.id.name);
+	yearBox = findViewById(R.id.year);
+	delButton = findViewById(R.id.deleteButton);
+	saveButton = findViewById(R.id.saveButton);
+
+	sqlHelper = new DatabaseHelper(this);
+	db = sqlHelper.getWritableDatabase();
+
+	Bundle extras = getIntent().getExtras();
+	if (extras != null) {
+		userId = extras.getLong("id");
+	}
+
+	// если 0, то добавление
+	if (userId > 0) {
+		// получаем элемент по id из бд
+		userCursor = db.rawQuery("select * from " + DatabaseHelper.TABLE + " where "
+				+ DatabaseHelper.COLUMN_ID + "=?", new String[]{String.valueOf(userId)});
+		userCursor.moveToFirst();
+		nameBox.setText(userCursor.getString(1));
+		yearBox.setText(String.valueOf(userCursor.getInt(2)));
+		userCursor.close();
+	} else {
+		// скрываем кнопку удаления
+		delButton.setVisibility(View.GONE);
+	}
+}
+public void save(View view){
+	ContentValues cv = new ContentValues();
+	cv.put(DatabaseHelper.COLUMN_NAME, nameBox.getText().toString());
+	cv.put(DatabaseHelper.COLUMN_YEAR,
+			Integer.parseInt(yearBox.getText().toString()));
+	if (userId > 0) {
+		db.update(DatabaseHelper.TABLE, cv, DatabaseHelper.COLUMN_ID +
+				"=" + userId, null);
+	} else {
+		db.insert(DatabaseHelper.TABLE, null, cv);
+	}
+	goHome();
+}
+public void delete(View view){
+	db.delete(DatabaseHelper.TABLE, "_id = ?", new
+			String[]{String.valueOf(userId)});
+	goHome();
+}
+private void goHome(){
+	// закрываем подключение
+	db.close();
+	// переход к главной activity
+	Intent intent = new Intent(this, SQLiteOpenHelperActivity.class);
+	intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
+			Intent.FLAG_ACTIVITY_SINGLE_TOP);
+	startActivity(intent);
+}
+\end{lstlisting}
+
+В файле activity\_user.xml определим универсальую форму для
+добавления/обновления/удаления данных:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <EditText
+        android:id="@+id/name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Введите имя"
+        app:layout_constraintBottom_toTopOf="@+id/year"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+    <EditText
+        android:id="@+id/year"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Введите год рождения"
+        app:layout_constraintTop_toBottomOf="@+id/name"
+        app:layout_constraintBottom_toTopOf="@+id/saveButton"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+    <Button
+        android:id="@+id/saveButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Сохранить"
+        android:onClick="save"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintTop_toBottomOf="@+id/year"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/deleteButton"
+        />
+    <Button
+        android:id="@+id/deleteButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Удалить"
+        android:onClick="delete"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintTop_toBottomOf="@+id/year"
+        app:layout_constraintLeft_toRightOf="@+id/saveButton"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+После этого нам надо исправить код управляющего класса, чтобы
+он инициировал выполнение кода в UserActivity:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+ListView userList;
+DatabaseHelper databaseHelper;
+SQLiteDatabase db;
+Cursor userCursor;
+SimpleCursorAdapter userAdapter;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_sqlite_open_helper);
+	userList = findViewById(R.id.list);
+	userList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position,
+								long id) {
+			Intent intent = new Intent(getApplicationContext(), UserActivity.class);
+			intent.putExtra("id", id);
+			startActivity(intent);
+		}
+	});
+	databaseHelper = new DatabaseHelper(getApplicationContext());
+}
+
+@Override
+public void onResume() {
+	super.onResume();
+	// открываем подключение
+	db = databaseHelper.getReadableDatabase();
+	//получаем данные из бд в виде курсора
+	userCursor = db.rawQuery("select * from " + DatabaseHelper.TABLE, null);
+	// определяем, какие столбцы из курсора будут выводиться в ListView
+	String[] headers = new String[]{DatabaseHelper.COLUMN_NAME,
+			DatabaseHelper.COLUMN_YEAR};
+	// создаем адаптер, передаем в него курсор
+	userAdapter = new SimpleCursorAdapter(this,
+			android.R.layout.two_line_list_item,
+			userCursor, headers, new int[]{android.R.id.text1, android.R.id.text2},
+			0);
+	userList.setAdapter(userAdapter);
+}
+// по нажатию на кнопку запускаем UserActivity для добавления данных
+public void add(View view) {
+	Intent intent = new Intent(this, UserActivity.class);
+	startActivity(intent);
+}
+
+@Override
+public void onDestroy(){
+	super.onDestroy();
+	// Закрываем подключение и курсор
+	db.close();
+	userCursor.close();
+}
+\end{lstlisting}
+
+\subsection{Использование существующей БД SQLite}
+Кроме создания новой базы данных мы также можем использовать уже
+существующую. Это может быть более предпочтительно, так как в этом
+случае база данных приложения уже будет содержать всю необходимую
+информацию.\par
+Возьмем проект, созданный в предыдущем материале, где у нас была
+MainActivity, которая выводила список объектов, и UserActivity, которая
+позволяла добавлять, редактировать и удалять объекты из БД.\par
+Для начала создадим базу данных SQLite. В этом нам может помочь такой
+инструмент как Sqlitebrowser. Он бесплатный и доступен для различных
+операционных систем по адресу https://sqlitebrowser.org/. Хотя можно
+использовать и другие способы для создания начальной БД.\par
+Общая команда на создание таблицы будет следующей:
+
+\begin{verbatim}
+CREATE TABLE "users" (
+	"_id"		INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+	"name"		TEXT NOT NULL,
+	"year"		INTEGER NOT NULL
+);
+\end{verbatim}
+
+После создания таблицы добавим в проект в Android Studio папку assets, а в
+папку assets --- только что созданную базу данных.\par
+Изменим код DatabaseHelper следующим образом:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+private static String DB_PATH; // полный путь к базе данных
+private static String DB_NAME = "users.db";
+private static final int SCHEMA = 1; // версия базы данных
+static final String TABLE = "name"; // название таблицы в бд названия столбцов
+static final String COLUMN_ID = "_id";
+static final String COLUMN_NAME = "name";
+static final String COLUMN_YEAR = "year";
+private Context myContext;
+
+DatabaseHelper2(Context context) {
+	super(context, DB_NAME, null, SCHEMA);
+	this.myContext=context;
+	DB_PATH =context.getFilesDir().getPath() + DB_NAME;
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+
+}
+
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { }
+void create_db(){
+	File file = new File(DB_PATH);
+	if (!file.exists()) {
+		//получаем локальную бд как поток
+		try(InputStream myInput = myContext.getAssets().open(DB_NAME);
+			// Открываем пустую бд
+			OutputStream myOutput = new FileOutputStream(DB_PATH)) {
+			// побайтово копируем данные
+			byte[] buffer = new byte[1024];
+			int length;
+			while ((length = myInput.read(buffer)) > 0) {
+				myOutput.write(buffer, 0, length);
+			}
+			myOutput.flush();
+		}
+		catch(IOException ex){
+			Log.d("DatabaseHelper", ex.getMessage());
+		}
+	}
+}
+public SQLiteDatabase open()throws SQLException {
+	return SQLiteDatabase.openDatabase(DB_PATH, null,
+			SQLiteDatabase.OPEN_READWRITE);
+}
+\end{lstlisting}
+
+По умолчанию база данных будет размещаться во внешнем хранилище,
+выделяемом для приложения в папке
+\verb|/data/data/[название_пакета]/databases/|.\par
+Метод onCreate() нам не нужен, так как нам не требуется создание
+встроенной базы данных. Зато здесь определен дополнительный метод
+create\_db(), цель которого копирование базы данных из папки assets в то
+место, которое указано в переменной DB\_PATH.\par
+Кроме этого здесь также определен метод открытия базы данных open() с
+помощью метода SQLiteDatabase.openDatabase().\par
+Новый способ организации подключения изменит использование
+DatabaseHelper в activity. Так, обновим класс MainActivity:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+ListView userList;
+DatabaseHelper2 databaseHelper;
+SQLiteDatabase db;
+Cursor userCursor;
+SimpleCursorAdapter userAdapter;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_existing_dbactivity);
+	userList = findViewById(R.id.list);
+	userList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position,
+								long id) {
+			Intent intent = new Intent(getApplicationContext(), UserActivity2.class);
+			intent.putExtra("id", id);
+			startActivity(intent);
+		}
+	});
+	databaseHelper = new DatabaseHelper2(getApplicationContext());
+	// создаем базу данных
+	databaseHelper.create_db();
+}
+
+@Override
+public void onResume() {
+	super.onResume();
+	// открываем подключение
+	db = databaseHelper.open();
+	//получаем данные из бд в виде курсора
+	userCursor = db.rawQuery("select * from " + DatabaseHelper2.TABLE, null);
+	// определяем, какие столбцы из курсора будут выводиться в ListView
+	String[] headers = new String[]{DatabaseHelper2.COLUMN_NAME,
+			DatabaseHelper2.COLUMN_YEAR};
+	// создаем адаптер, передаем в него курсор
+	userAdapter = new SimpleCursorAdapter(this,
+			android.R.layout.two_line_list_item,
+			userCursor, headers, new int[]{android.R.id.text1, android.R.id.text2},
+			0);
+	userList.setAdapter(userAdapter);
+}
+// по нажатию на кнопку запускаем UserActivity для добавления данных
+public void add(View view) {
+	Intent intent = new Intent(this, UserActivity2.class);
+	startActivity(intent);
+}
+
+@Override
+public void onDestroy() {
+	super.onDestroy();
+	// Закрываем подключение и курсор
+	db.close();
+	userCursor.close();
+}
+\end{lstlisting}
+
+\subsection{Динамический поиск по базе данных SQLite}
+Рассмотрим, как мы можем создать в приложении на Android динамический
+поиск по базе данных SQLite.\par
+Изменим класс DatabaseHelper:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+public class DatabaseHelper2 extends SQLiteOpenHelper {
+	private static String DB_PATH; // полный путь к базе данных
+	private static String DB_NAME = "users.db";
+	private static final int SCHEMA = 1; // версия базы данных
+	static final String TABLE = "name"; // название таблицы в бд названия столбцов
+	static final String COLUMN_ID = "_id";
+	static final String COLUMN_NAME = "name";
+	static final String COLUMN_YEAR = "year";
+	private Context myContext;
+
+	DatabaseHelper2(Context context) {
+		super(context, DB_NAME, null, SCHEMA);
+		this.myContext=context;
+		DB_PATH =context.getFilesDir().getPath() + DB_NAME;
+	}
+
+	@Override
+	public void onCreate(SQLiteDatabase db) {
+
+	}
+
+	@Override
+	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { }
+	void create_db(){
+		File file = new File(DB_PATH);
+		if (!file.exists()) {
+			//получаем локальную бд как поток
+			try(InputStream myInput = myContext.getAssets().open(DB_NAME);
+				// Открываем пустую бд
+				OutputStream myOutput = new FileOutputStream(DB_PATH)) {
+				// побайтово копируем данные
+				byte[] buffer = new byte[1024];
+				int length;
+				while ((length = myInput.read(buffer)) > 0) {
+					myOutput.write(buffer, 0, length);
+				}
+				myOutput.flush();
+			}
+			catch(IOException ex){
+				Log.d("DatabaseHelper", ex.getMessage());
+			}
+		}
+	}
+	public SQLiteDatabase open()throws SQLException {
+		return SQLiteDatabase.openDatabase(DB_PATH, null,
+				SQLiteDatabase.OPEN_READWRITE);
+	}
+}
+\end{lstlisting}
+
+Перейдем к файлу размеку, который определяет визуальный
+интерфейс, и изменим его следующим образом:
+
+\begin{lstlisting}[language=XML
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    <EditText android:id="@+id/userFilter"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Поиск"
+        app:layout_constraintBottom_toTopOf="@+id/userList"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <ListView
+        android:id="@+id/userList"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/userFilter"
+        />
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Итак, у нас будет элемент ListView для отображения списка и текстовое поле
+для фильтрации.
+Теперь изменим код MainActivity:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+DatabaseHelper2 sqlHelper;
+SQLiteDatabase db;
+Cursor userCursor;
+SimpleCursorAdapter userAdapter;
+ListView userList;
+EditText userFilter;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_dbsearch);
+	userList = findViewById(R.id.userList);
+	userFilter = findViewById(R.id.userFilter);
+
+	sqlHelper = new DatabaseHelper2(getApplicationContext());
+	// создаем базу данных
+	sqlHelper.create_db();
+}
+
+@Override
+public void onResume() {
+	super.onResume();
+	try {
+		db = sqlHelper.open();
+		userCursor = db.rawQuery("select * from " + DatabaseHelper2.TABLE,null);
+		String[] headers = new String[]{DatabaseHelper2.COLUMN_NAME,
+				DatabaseHelper2.COLUMN_YEAR};
+		userAdapter = new SimpleCursorAdapter(this,
+				android.R.layout.two_line_list_item,
+				userCursor, headers, new int[]{android.R.id.text1, android.R.id.text2},
+				0);
+		// если в текстовом поле есть текст, выполняем фильтрацию
+		// данная проверка нужна при переходе от одной ориентации экрана к другой
+		if(!userFilter.getText().toString().isEmpty())
+			userAdapter.getFilter().filter(userFilter.getText().toString());
+		// установка слушателя изменения текста
+		userFilter.addTextChangedListener(new TextWatcher() {
+			public void afterTextChanged(Editable s) { }
+			public void beforeTextChanged(CharSequence s, int start, int count, int
+					after) { }
+			// при изменении текста выполняем фильтрацию
+			public void onTextChanged(CharSequence s, int start, int before, int
+					count) {
+				userAdapter.getFilter().filter(s.toString());
+			}
+		});
+		// устанавливаем провайдер фильтрации
+		userAdapter.setFilterQueryProvider(new FilterQueryProvider() {
+			@Override
+			public Cursor runQuery(CharSequence constraint) {
+				if (constraint == null || constraint.length() == 0) {
+					return db.rawQuery("select * from " + DatabaseHelper2.TABLE,
+							null);
+				}
+				else {
+					return db.rawQuery("select * from " + DatabaseHelper2.TABLE + " where " +
+							DatabaseHelper2.COLUMN_NAME + " like ?", new
+									String[]{"\%" + constraint.toString() + "\%"});
+				}
+			}
+		});
+		userList.setAdapter(userAdapter);
+	}
+	catch (SQLException ex) {}
+}
+
+@Override
+public void onDestroy(){
+	super.onDestroy();
+	// Закрываем подключение и курсор
+	db.close();
+	userCursor.close();
+}
+\end{lstlisting}
+
+\subsection{Модель, репозиторий и работа с базой данных}
+В прошлых материалах было рассмотрено взаимодействие с базой данных
+через класс SimpleCursorAdapter. Но есть и другие способы работы с
+данными, когда мы абстрагируемся от структуры таблицы и работаем через
+модель, а все взаимодействие с базой данных производится фактически через
+реализацию паттерна репозиторий.\par
+Так, создадим новый проект с пустой MainActivity и прежде всего добавим в
+него класс модели, который назовем User:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+public class User implements Serializable {
+	private long id;
+	private String name;
+	private int age;
+
+	public User(String name, int age){
+		this.name = name;
+		this.age = age;
+	}
+
+	User(long id, String name, int year){
+		this.id = id;
+		this.name = name;
+		this.age = year;
+	}
+	public long getId() {
+		return id;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public int getAge() {
+		return age;
+	}
+	public void setAge(int age) {
+		this.age = age;
+	}
+
+	@Override
+	public String toString() {
+		return name + " : " + age;
+	}
+}
+\end{lstlisting}
+
+В данном проекте мы будем работть фактически с теми же данными, что и
+ранее с данными пользователей, у которых есть уникальный идентификатор,
+имя и год рождения. И модель User как раз описывает эти данные.
+Для взаимодействия с базой данных SQLite изменим класс
+DatabaseHelper:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+private static final String DATABASE_NAME = "userstore3.db"; // название бд
+private static final int SCHEMA = 1; // версия базы данных
+static final String TABLE = "users"; // название таблицы в бд
+// названия столбцов
+public static final String COLUMN_ID = "_id";
+public static final String COLUMN_NAME = "name";
+public static final String COLUMN_YEAR = "year";
+
+public DatabaseHelper3(Context context) {
+	super(context, DATABASE_NAME, null, SCHEMA);
+}
+
+@Override
+public void onCreate(SQLiteDatabase db) {
+	db.execSQL("CREATE TABLE " + TABLE + " (" + COLUMN_ID
+			+ " INTEGER PRIMARY KEY AUTOINCREMENT," +
+			COLUMN_NAME
+			+ " TEXT, " + COLUMN_YEAR + " INTEGER);");
+	// добавление начальных данных
+	db.execSQL("INSERT INTO "+ TABLE +" (" + COLUMN_NAME
+			+ ", " + COLUMN_YEAR + ") VALUES ('Том Смит', 1981);");
+}
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+	db.execSQL("DROP TABLE IF EXISTS "+TABLE);
+	onCreate(db);
+}
+\end{lstlisting}
+
+Также для работы с базой данных добавим в проект класс DatabaseAdapter:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+public class DatabaseAdapter {
+	private DatabaseHelper3 dbHelper;
+	private SQLiteDatabase database;
+
+	public DatabaseAdapter(Context context){
+		dbHelper = new DatabaseHelper3(context.getApplicationContext());
+	}
+
+	public DatabaseAdapter open(){
+		database = dbHelper.getWritableDatabase();
+		return this;
+	}
+
+	public void close(){
+		dbHelper.close();
+	}
+	private Cursor getAllEntries(){
+		String[] columns = new String[] {DatabaseHelper3.COLUMN_ID,
+				DatabaseHelper3.COLUMN_NAME, DatabaseHelper3.COLUMN_YEAR};
+		return database.query(DatabaseHelper3.TABLE, columns, null, null, null, null,
+				null);
+	}
+	public List<User> getUsers(){
+		ArrayList<User> users = new ArrayList<>();
+		Cursor cursor = getAllEntries();
+		while (cursor.moveToNext()){
+			int tmp = cursor.getColumnIndex(DatabaseHelper3.COLUMN_ID);
+			int id = cursor.getInt(tmp);
+			tmp = cursor.getColumnIndex(DatabaseHelper3.COLUMN_NAME);
+			String name = cursor.getString(tmp);
+			tmp = cursor.getColumnIndex(DatabaseHelper3.COLUMN_YEAR);
+			int year = cursor.getInt(tmp);
+			users.add(new User(id, name, year));
+		}
+		cursor.close();
+		return users;
+	}
+	public long getCount(){
+		return DatabaseUtils.queryNumEntries(database, DatabaseHelper3.TABLE);
+	}
+	public User getUser(long id){
+		User user = null;
+		String query = String.format("SELECT * FROM \%s WHERE \%s=?"
+			, DatabaseHelper3.TABLE, DatabaseHelper3.COLUMN_ID);
+		Cursor cursor = database.rawQuery(query, new String[]{
+				String.valueOf(id)});
+		if(cursor.moveToFirst()){
+			int tmp = cursor.getColumnIndex(DatabaseHelper3.COLUMN_NAME);
+			String name = cursor.getString(tmp);
+			tmp = cursor.getColumnIndex(DatabaseHelper3.COLUMN_YEAR);
+			int year = cursor.getInt(tmp);
+			user = new User(id, name, year);
+		}
+		cursor.close();
+		return user;
+	}
+	public long insert(User user){
+		ContentValues cv = new ContentValues();
+		cv.put(DatabaseHelper3.COLUMN_NAME, user.getName());
+		cv.put(DatabaseHelper3.COLUMN_YEAR, user.getAge());
+		return database.insert(DatabaseHelper3.TABLE, null, cv);
+	}
+	public long delete(long userId){
+		String whereClause = "_id = ?";
+		String[] whereArgs = new String[]{String.valueOf(userId)};
+		return database.delete(DatabaseHelper3.TABLE, whereClause, whereArgs);
+	}
+	public long update(User user){
+		String whereClause = DatabaseHelper3.COLUMN_ID + "=" + user.getId();
+		ContentValues cv = new ContentValues();
+		cv.put(DatabaseHelper3.COLUMN_NAME, user.getName());
+		cv.put(DatabaseHelper3.COLUMN_YEAR, user.getAge());
+		return database.update(DatabaseHelper3.TABLE, cv, whereClause, null);
+	}
+}
+\end{lstlisting}
+
+Фактически данный класс выполняет роль репозитория данных. Чтобы
+взамодействовать с БД он определяет методы open() и close(), которые
+соответственно открывают и закрывают подключение к базе данных.\par
+Непосредственно для работы с данными в классе определены методы insert()
+(добавление), delete() (удаление), update() (обновление)
+, getUsers() (получение всех пользователей из таблицы) и getUser()
+(получение одного пользователя по id).\par
+В файле размеку в папке res/layout определим визуальный
+интерфейс:
+
+\begin{lstlisting}[language=XML
+	, label=lst:
+	]
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/addButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Добавить"
+        android:onClick="add"
+        app:layout_constraintBottom_toTopOf="@+id/list"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+    <ListView
+        android:id="@+id/list"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@+id/addButton"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Здесь имеется элемент ListView для вывода объектов из таблицы и кнопка
+для перехода к UserActivity для добавления пользователя.\par
+И изменим код MainActivity:
+
+\begin{lstlisting}[language=Java
+	, label=lst:
+	]
+private ListView userList;
+ArrayAdapter<User> arrayAdapter;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_model_and_repository);
+	userList = findViewById(R.id.list);
+	userList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			User user = arrayAdapter.getItem(position);
+			if(user != null) {
+				Intent intent = new Intent(getApplicationContext(), UserActivity3.class);
+				intent.putExtra("id", user.getId());
+				startActivity(intent);
+			}
+		}
+	});
+}
+@Override
+public void onResume() {
+	super.onResume();
+	DatabaseAdapter adapter = new DatabaseAdapter(this);
+	adapter.open();
+	List<User> users = adapter.getUsers();
+	arrayAdapter = new ArrayAdapter<>(this,
+			android.R.layout.simple_list_item_1, users);
+	userList.setAdapter(arrayAdapter);
+	adapter.close();
+}
+
+// по нажатию на кнопку запускаем UserActivity для добавления данных
+public void add(View view){
+	Intent intent = new Intent(this, UserActivity3.class);
+	startActivity(intent);
+}
+\end{lstlisting}
+
+В переопределенном методе onResume() через объект DatabaseAdapter
+получаем всех пользователей из базы данных и через ArrayAdapter выводим
+их в ListView.\par
+При нажатии на элемент ListView запускаем UserActivity, передавая ей id
+выделенного пользователя.\par
+При нажатии на кнопку просто вызываем UserActivit.
+
+\clearpage
+
+\section*{\LARGE{Вывод}}
+\addcontentsline{toc}{section}{Вывод}
+В данной практической работе были получены знания о способах
+сохранения состояния приложения через встроенные метды.
+Также узнали как создавать и получать настройки в приложении и делать
+их приватными.\par
+Познакомились с работой с файловой системой. Например научились
+в приложении читать и сохраниять файлы или размещать файлы,
+не только во внутреннем, но и во внешнем хранилище.\par
+И в конце научились работать с базой данных SQLite.
+Узнали как программно осуществлять такие функции как:
+
+\begin{itemize}
+	\item подключение к бд;
+	\item создание и открытие бд;
+	\item получение данных из бд;
+	\item добавление, удаление и обновление данный в бд;
+	\item и другие.
+\end{itemize}
+
