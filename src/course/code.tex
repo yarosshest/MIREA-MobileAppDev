@@ -1,2 +1,742 @@
-\chapter{MainActivity.java}
-jalksdfla
+Ссылка на репозиторий в GitHub c приложением, реализованным в курсовой работе:
+\url{https://github.com/yarosshest/MIREA_Kurs_4_sem}
+
+Ссылка на репозиторий в GitHub c серверной частью, реализованным в курсовой работе:
+\url{https://github.com/yarosshest/RecomApi}
+
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{RetrofitHelper}, label=lst:RetrofitHelper]
+object RetrofitHelper {
+
+    private const val BASE_URL = "http://172.31.128.1:8031/"
+    private val client: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(5, TimeUnit.MINUTES)
+        .readTimeout(5, TimeUnit.MINUTES)
+        .writeTimeout(5, TimeUnit.MINUTES)
+        .cookieJar(MyCookieJar())
+        .build()
+
+    fun getInstance(): Retrofit {
+
+
+        return  Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Api}, label=lst:Api]
+interface Api {
+
+    @GET("register")
+    fun register(
+        @Query("log") login: String,
+        @Query("password") password: String,
+        ): Call<Map<String,Int>>
+
+    @GET("login")
+    fun login(
+        @Query("log") login: String,
+        @Query("password") password: String,
+    ): Call<Map<String,Int>>
+
+    @GET("find")
+    fun find(
+        @Query("line") line: String
+    ): Call<List<Film>>
+
+    @GET("get_film")
+    fun get_film(
+        @Query("prod_id") id: Int
+    ): Call<Film>
+
+    @POST("rate")
+    fun rate(
+        @Query("prod_id") id: Int,
+        @Query("user_rate") rate: Boolean,
+    ): Call<String>
+
+
+    @GET("get_recommendations")
+    fun get_recommendations(
+    ): Call<List<Film>>
+
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Register}, label=lst:Register]
+class Register : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_register)
+    }
+
+    fun onClickRegister(view: View) {
+
+        val intent = Intent(this, Login::class.java)
+
+        val textLogin = findViewById<EditText>(R.id.edittTextTextLogin)
+        val textPassword = findViewById<EditText>(R.id.editTextTextPassword)
+        val textError = findViewById<TextView>(R.id.textError)
+
+        val api = RetrofitHelper.getInstance().create(Api::class.java)
+        val call = api.register(
+            login = textLogin.text.toString(),
+            password = textPassword.text.toString()
+        )
+
+        call.enqueue(object : Callback<Map<String, Int>>{
+            override fun onResponse(
+                call: Call<Map<String, Int>>,
+                response: Response<Map<String, Int>>
+            ) {
+                if (response.isSuccessful) {
+                    startActivity(intent)
+                }else{
+                    if (response.code() == 405)
+                        textError.text = "User already exists"
+                }
+            }
+
+            override fun onFailure(call: Call<Map<String, Int>>, t: Throwable) {
+                println("Network Error :: " + t.localizedMessage);
+            }
+
+        })
+
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{Login}, label=lst:Login]
+class Login : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_login)
+    }
+
+    fun onLoginClick(view: View) {
+        val intent = Intent(this, MainAppActivity::class.java)
+
+        val textLogin = findViewById<EditText>(R.id.edittTextTextLogin)
+        val textPassword = findViewById<EditText>(R.id.editTextTextPassword)
+        val textError = findViewById<TextView>(R.id.textError)
+
+        val api = RetrofitHelper.getInstance().create(Api::class.java)
+        val call = api.login(
+            login = textLogin.text.toString(),
+            password = textPassword.text.toString()
+        )
+
+        call.enqueue(object : Callback<Map<String, Int>> {
+            override fun onResponse(
+                call: Call<Map<String, Int>>,
+                response: Response<Map<String, Int>>
+            ) {
+                if (response.isSuccessful) {
+                    startActivity(intent)
+                }else{
+                    if (response.code() == 404)
+                        textError.text = "User not found"
+                }
+            }
+
+            override fun onFailure(call: Call<Map<String, Int>>, t: Throwable) {
+                println("Network Error :: " + t.localizedMessage);
+            }
+
+        })
+    }
+
+
+    fun onClickRegister(view: View) {
+        val intent = Intent(this, Register::class.java)
+        startActivity(intent)
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{MainAppActivity}, label=lst:MainAppActivity]
+class MainAppActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main_app)
+
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
+        val navController = navHostFragment.navController
+
+        val bnv = findViewById<BottomNavigationView >(R.id.bottomNavigationView)
+
+
+        bnv.setOnItemSelectedListener {
+            when(it.itemId) {
+                R.id.search -> {
+                    navController.navigate(R.id.findFragment )
+                    return@setOnItemSelectedListener true
+                }
+
+                R.id.recommendation -> {
+                    navController.navigate(R.id.recommendationFragment)
+                    return@setOnItemSelectedListener true
+                }
+
+                R.id.timer -> {
+                    navController.navigate(R.id.timerFragment)
+                    return@setOnItemSelectedListener true
+                }
+                else -> {false}
+            }
+        }
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{FindFragment}, label=lst:FindFragment]
+class FindFragment : Fragment() {
+    private lateinit var saveAdapter : FilmAdapter
+
+    private val viewModel: AppViewModel by activityViewModels()
+
+    private lateinit var listFilm : RecyclerView
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_find, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val textError : TextView = view.findViewById(R.id.textError)
+
+        val search = view.findViewById<SearchView>(R.id.searchName)
+
+        listFilm = view.findViewById(R.id.listFilm)
+
+        val savedFilms = viewModel.getFindList()
+
+
+        listFilm.layoutManager = GridLayoutManager(context, 3)
+
+        if (this::saveAdapter.isInitialized){
+            saveAdapter.setOnClickListener(object :
+                FilmAdapter.OnClickListener {
+                override fun onClick(position: Int, model: Film) {
+                    val bundle = bundleOf("id_film" to model.id)
+                    view.findNavController().navigate(
+                        R.id.action_findFragment_to_productFragment,
+                        bundle
+                    )
+                }
+            })
+            listFilm.adapter = saveAdapter
+        } else if (savedFilms != null){
+            val adapter = createAdapter(savedFilms)
+            listFilm.adapter = adapter
+        }
+
+        val api = RetrofitHelper.getInstance().create(Api::class.java)
+
+        search.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
+            override fun onQueryTextSubmit(p0: String?): Boolean {
+                p0?.let { api.find(line = it) }
+                    ?.enqueue(object : Callback<List<Film>> {
+                        override fun onResponse(
+                            call: Call<List<Film>>,
+                            response: Response<List<Film>>
+                        ) {
+                            if (response.isSuccessful) {
+                                textError.visibility = View.GONE
+                                val films = response.body()
+                                if (films != null) {
+                                    val adapter = createAdapter(films)
+                                    listFilm.adapter = adapter
+                                    saveAdapter = adapter
+                                    viewModel.saveFindList(films)
+                                }
+                            }else if (response.code() == 404){
+                                textError.text = "Films not found"
+                                textError.visibility = View.VISIBLE
+                            }
+                        }
+
+                        override fun onFailure(call: Call<List<Film>>, t: Throwable) {
+                            println("Network Error :: " + t.localizedMessage);
+                        }
+
+                    })
+                return true
+            }
+
+            override fun onQueryTextChange(p0: String?): Boolean {
+                return true
+            }
+        })
+    }
+
+    private fun createAdapter(films : List<Film>) : FilmAdapter{
+        val adapter = FilmAdapter(films)
+        adapter.setOnClickListener(object :
+            FilmAdapter.OnClickListener {
+            override fun onClick(position: Int, model: Film) {
+                val bundle = bundleOf("id_film" to model.id)
+                view?.findNavController()?.navigate(
+                    R.id.action_findFragment_to_productFragment,
+                    bundle
+                )
+            }
+        })
+        return adapter
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{RecommendationFragment}, label=lst:RecommendationFragment]
+class RecommendationFragment : Fragment() {
+    private lateinit var saveAdapter : FilmAdapter
+
+
+    private val viewModel: AppViewModel by activityViewModels()
+
+    private lateinit var binding: FragmentRecommendationBinding
+
+    private lateinit var getButton: Button
+    private lateinit var bar: ProgressBar
+    private lateinit var textError: TextView
+    private lateinit var listFilm: RecyclerView
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        binding = FragmentRecommendationBinding.inflate(layoutInflater)
+
+        getButton  = binding.buttonRecommindations
+        bar = binding.progressBar
+        textError = binding.textError
+        listFilm = binding.listFilm
+    }
+
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        listFilm.layoutManager = GridLayoutManager(context, 3)
+
+
+        val savedFilms = viewModel.getRecommendList()
+
+
+        val recyclerViewObserver = Observer<List<Film>> {
+            val adapter = createAdapter(it)
+            listFilm.adapter = adapter
+            getButton.visibility = View.VISIBLE
+            bar.visibility = View.GONE
+        }
+
+
+        viewModel.getObserveRecommendList().observe(viewLifecycleOwner, recyclerViewObserver)
+
+        val searching = viewModel.getStatusRecommendService()
+
+        if (searching == true) {
+            getButton.visibility = View.GONE
+            bar.visibility = View.VISIBLE
+        }
+
+
+        if (this::saveAdapter.isInitialized){
+            saveAdapter.setOnClickListener(object :
+                FilmAdapter.OnClickListener {
+                override fun onClick(position: Int, model: Film) {
+                    val bundle = bundleOf("id_film" to model.id)
+                    view.findNavController().navigate(
+                        R.id.action_recommendationFragment_to_productFragment,
+                        bundle
+                    )
+                }
+            })
+            listFilm.adapter = saveAdapter
+        }else if (savedFilms != null){
+            val adapter = createAdapter(savedFilms)
+            listFilm.adapter = adapter
+        }
+
+
+        getButton.setOnClickListener {
+            viewModel.saveStatusRecommendService(true)
+            bar.visibility = View.VISIBLE
+            getButton.visibility = View.GONE
+
+            val api = RetrofitHelper.getInstance().create(Api::class.java)
+            val call = api.get_recommendations()
+
+            call.enqueue(object : Callback<List<Film>>{
+                override fun onResponse(call: Call<List<Film>>, response: Response<List<Film>>) {
+                    viewModel.saveStatusRecommendService(false)
+                    bar.visibility = View.GONE
+                    getButton.visibility = View.VISIBLE
+                    if (response.isSuccessful) {
+                        val films = response.body()
+                        if (films != null) {
+                            val adapter = createAdapter(films)
+                            listFilm.adapter = adapter
+                            saveAdapter = adapter
+                            viewModel.saveRecommendList(films)
+                        }
+                    } else if (response.code() == 405) {
+                        textError.text = "Less 2 positive rates"
+                        textError.visibility = View.VISIBLE
+                    }else if (response.code() == 406) {
+                        textError.text = "Less 2 negative rates"
+                        textError.visibility = View.VISIBLE
+                    }
+                }
+
+                override fun onFailure(call: Call<List<Film>>, t: Throwable) {
+                    textError.text = "Connection lost"
+                    textError.visibility = View.VISIBLE
+                    println("Network Error :: " + t.localizedMessage);
+                }
+            })
+        }
+    }
+
+     fun createAdapter(films : List<Film>) : FilmAdapter{
+        val adapter = FilmAdapter(films)
+        adapter.setOnClickListener(object :
+            FilmAdapter.OnClickListener {
+            override fun onClick(position: Int, model: Film) {
+                val bundle = bundleOf("id_film" to model.id)
+                view?.findNavController()?.navigate(
+                    R.id.action_recommendationFragment_to_productFragment,
+                    bundle
+                )
+            }
+        })
+        return adapter
+    }
+
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{TimerFragment}, label=lst:TimerFragment]
+class TimerFragment : Fragment() {
+
+    private val TAG = "TimerFragment"
+
+    private lateinit var binding: FragmentTimerBinding
+
+    private lateinit var button : FloatingActionButton
+    private lateinit var clock : TextView
+    private var timeTimer : Long = 30*60000
+    private var play : Boolean = false
+
+    private var settings: SharedPreferences? = null
+
+    companion object {
+        const val preferences = "preferences"
+        const val TIME = "time"
+        const val STATUS = "play"
+        const val NOTIFICATION_ID = 101
+        const val CHANNEL_ID = "1"
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        binding = FragmentTimerBinding.inflate(layoutInflater)
+
+        clock  = binding.textView
+        button = binding.imageButton
+
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+
+        clock.setOnClickListener(onTimeClicklistener)
+        button.setOnClickListener(onPlayClick)
+
+    }
+
+
+
+    private val broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            //Update GUI
+            updateGUI(intent)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        play = requireActivity().getSharedPreferences(
+            preferences, Context.MODE_PRIVATE).getBoolean(STATUS, false)
+        if (play){
+            button.setImageResource(R.drawable.baseline_pause_circle_outline)
+        }else{
+            button.setImageResource(R.drawable.baseline_play_circle_outline)
+        }
+
+        timeTimer = requireActivity().getSharedPreferences(
+            preferences, Context.MODE_PRIVATE).getLong(TIME, 30000)
+        clock.text = convertSecondsToHMmSs(timeTimer)
+        context?.registerReceiver(broadcastReceiver, IntentFilter(TimerService.COUNTDOWN_BR))
+    }
+
+    override fun onPause() {
+        super.onPause()
+        requireActivity().getSharedPreferences(
+            preferences, Context.MODE_PRIVATE).edit().putBoolean(STATUS, play).apply()
+        requireActivity().getSharedPreferences(
+            preferences, Context.MODE_PRIVATE).edit().putLong(
+            TIME, timeTimer).apply()
+        context?.unregisterReceiver(broadcastReceiver)
+    }
+
+    override fun onStop() {
+        try {
+            context?.unregisterReceiver(broadcastReceiver)
+        } catch (e: Exception) {
+            // Receiver was probably already
+        }
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        context?.stopService(Intent(context, TimerService::class.java))
+        super.onDestroy()
+    }
+
+
+
+
+    private fun updateGUI(intent: Intent) {
+        if (intent.extras != null) {
+            val millisUntilFinished : Long = intent.getLongExtra("countdown", 30000)
+            clock.text = convertSecondsToHMmSs(millisUntilFinished)
+            timeTimer = millisUntilFinished
+        }
+    }
+
+
+
+
+    private val onPlayClick = View.OnClickListener { view ->
+        when (view.id) {
+            R.id.imageButton -> {
+                val button : FloatingActionButton = view.findViewById(R.id.imageButton)
+                play = if(!play) {
+                    val intent = Intent(context, TimerService::class.java)
+                    intent.putExtra("time", timeTimer)
+                    context?.startService(intent)
+                    Log.i(TAG,"Started Service")
+                    button.setImageResource(R.drawable.baseline_pause_circle_outline)
+                    true
+                }else{
+                    context?.stopService(Intent(context, TimerService::class.java))
+                    button.setImageResource(R.drawable.baseline_play_circle_outline)
+                    false
+                }
+            }
+        }
+    }
+
+
+    private val onTimeClicklistener= View.OnClickListener { view ->
+        when (view.id) {
+            R.id.textView -> {
+                play = false
+                button.setImageResource(R.drawable.baseline_play_circle_outline)
+                context?.stopService(Intent(context, TimerService::class.java))
+                val picker =
+                    MaterialTimePicker.Builder()
+                        .setTimeFormat(TimeFormat.CLOCK_24H)
+                        .setTitleText("Select Appointment time")
+                        .setInputMode(INPUT_MODE_CLOCK)
+                        .build()
+                fragmentManager?.let { picker.show(it, "tag") }
+
+                picker.addOnPositiveButtonClickListener {
+                    val newHour: Int = picker.hour
+                    val newMinute: Int = picker.minute
+                    val time: String = java.lang.String.format(
+                        Locale.getDefault(),
+                        "%02d:%02d",
+                        newHour,
+                        newMinute
+                    )
+                    clock.text = time
+                    timeTimer = (newHour*3600000).toLong()
+                    timeTimer += (newMinute*60000).toLong()
+
+                }
+            }
+        }
+    }
+
+    private fun convertSecondsToHMmSs(milliseconds: Long): String {
+        val s = (milliseconds/1000) % 60
+        val m = milliseconds / 60000  % 60
+        val h = milliseconds / 3600000  % 24
+        return "%d:%02d:%02d".format(h, m, s)
+    }
+
+
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{TimerService}, label=lst:TimerService]
+class TimerService : Service() {
+    private lateinit var builder : NotificationCompat.Builder
+    private lateinit var notificationManager : NotificationManagerCompat
+
+    private lateinit var timer : CountDownTimer
+
+    companion object {
+        const val COUNTDOWN_BR = "com.example.mirea_kurs_4_sem.timer"
+        val intent = Intent(COUNTDOWN_BR)
+        const val NOTIFICATION_ID = 101
+        const val CHANNEL_ID = "1"
+        private val TAG = "TimerService"
+    }
+
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val intentNotification = Intent(applicationContext, TimerFragment::class.java)
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(
+            applicationContext, 0, intentNotification, PendingIntent.FLAG_IMMUTABLE)
+
+
+        builder = applicationContext?.let {
+            NotificationCompat.Builder(it, CHANNEL_ID)
+                .setSmallIcon(R.drawable.baseline_timer)
+                .setContentTitle("Напоминание")
+                .setContentText("Время просмотра законченно")
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setOngoing(true)
+                .setContentIntent(pendingIntent)
+        }!!
+        notificationManager = applicationContext?.let { NotificationManagerCompat.from(it) }!!
+        createNotificationChannel()
+        val millis : Long = intent!!.getLongExtra("time", 3000)
+
+
+        timer = object : CountDownTimer(millis, 100){
+            override fun onTick(millisUntilFinished: Long) {
+                Companion.intent.putExtra("countdown",millisUntilFinished);
+                sendBroadcast(Companion.intent);
+            }
+
+            override fun onFinish() {
+                createNotificationChannel()
+                Companion.intent.putExtra("countdown",0)
+                sendBroadcast(Companion.intent);
+                with(applicationContext.let { NotificationManagerCompat.from(it) }) {
+                    if (applicationContext.let {
+                            androidx.core.app.ActivityCompat.checkSelfPermission(
+                                it,
+                                android.Manifest.permission.POST_NOTIFICATIONS
+                            )
+                        } != android.content.pm.PackageManager.PERMISSION_GRANTED
+                    ) {
+                        return
+                    }
+                    this.notify(
+                        TimerFragment.NOTIFICATION_ID,
+                        builder.build()
+                    )
+                }
+            }
+        }
+        timer.start()
+        return START_STICKY
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        timer.cancel()
+    }
+
+
+
+    private fun createNotificationChannel() {
+        val name = "Напоминание"
+        val descriptionText = "Время просмотра законченно"
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(TimerFragment.CHANNEL_ID, name, importance).apply {
+            description = descriptionText
+        }
+        val notificationManager: NotificationManager =
+            applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+
+
+    override fun onBind(p0: Intent?): IBinder? {
+        return null
+    }
+
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Kotlin, caption=\leftline{AppViewModel}, label=lst:AppViewModel]
+class AppViewModel: ViewModel()  {
+    private val findList = MutableLiveData<List<Film>>()
+    private val recommendList = MutableLiveData<List<Film>>()
+
+    private val statusRecommendService = MutableLiveData(false)
+
+    fun saveFindList(list : List<Film>){
+        findList.value = list
+    }
+    fun getFindList() : List<Film>? {
+        return findList.value
+    }
+
+    fun saveRecommendList(list : List<Film>){
+        recommendList.value = list
+    }
+    fun getRecommendList() : List<Film>? {
+        return recommendList.value
+    }
+
+    fun saveStatusRecommendService(flag : Boolean){
+        statusRecommendService.value = flag
+    }
+    fun getStatusRecommendService() : Boolean? {
+        return statusRecommendService.value
+    }
+
+    fun getObserveRecommendList() : LiveData<List<Film>> {
+        return recommendList
+    }
+
+}
+\end{lstlisting}
